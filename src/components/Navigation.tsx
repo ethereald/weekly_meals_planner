@@ -31,7 +31,7 @@ export default function Navigation() {
     try {
       await authApi.logout();
       setIsAuthenticated(false);
-      router.push('/auth');
+      router.push('/'); // Redirect to homepage instead of /auth
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -58,6 +58,11 @@ export default function Navigation() {
     }
     return pathname === href;
   };
+
+  // Hide navigation on homepage when not authenticated (login page)
+  if (pathname === '/' && !isAuthenticated && !isLoading) {
+    return null;
+  }
 
   const navItems = getNavItems();
 

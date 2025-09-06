@@ -8,15 +8,9 @@ export function middleware(request: NextRequest) {
   // Check if user is authenticated
   const isAuthenticated = token ? verifyToken(token) !== null : false;
 
-  // If accessing root path
+  // Allow root path to handle its own authentication
   if (pathname === '/') {
-    if (isAuthenticated) {
-      // User is logged in, show homepage
-      return NextResponse.next();
-    } else {
-      // User is not logged in, redirect to login
-      return NextResponse.redirect(new URL('/auth', request.url));
-    }
+    return NextResponse.next();
   }
 
   // For protected routes (you can add more as needed)

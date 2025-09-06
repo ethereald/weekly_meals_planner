@@ -5,3 +5,8 @@ export { cn } from './utils';
 export { db } from './db';
 export * from './db/schema';
 export * from './db/utils';
+
+// Authentication exports
+export * from './auth';
+export * from './auth-client';
+export * from './middleware';

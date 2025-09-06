@@ -1,100 +1,241 @@
 # Weekly Meals Planner
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+A comprehensive meal planning application built with Next.js 15, TypeScript, and Tailwind CSS. Features multi-user authentication, dual database support (SQLite for development, PostgreSQL for production), and a complete meal planning system.
 
-## Tech Stack
+## 🚀 Features
 
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: PostgreSQL with Drizzle ORM
+### Authentication System
+- ✅ **Multi-User Support** - Individual user accounts with secure authentication
+- ✅ **Username/Password Login** - Simple, secure authentication
+- ✅ **Password Management** - Secure password hashing and change functionality
+- ✅ **JWT Tokens** - Stateless authentication with JWT
+- ✅ **Protected Routes** - Middleware-based route protection
+
+### Meal Planning (Coming Soon)
+- 📅 **Weekly Planning** - Plan meals for the entire week
+- 🍽️ **Meal Categories** - Breakfast, lunch, dinner, and snacks
+- 📋 **Shopping Lists** - Auto-generated from meal plans
+- 🥗 **Ingredient Management** - Track ingredients and quantities
+- 📊 **Nutritional Goals** - Set and track nutritional targets
+- 🔄 **Meal Rotation** - Reuse favorite meal plans
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: SQLite (development) / PostgreSQL (production)
+- **ORM**: Drizzle ORM
+- **Authentication**: bcryptjs, jsonwebtoken
 - **Package Manager**: pnpm
-- **Deployment**: Optimized for Vercel
+- **Deployment**: Vercel-ready
 
-## Project Structure
+## 📦 Installation
 
-```
-src/
-├── app/          # Next.js 15 App Router pages
-│   └── api/     # API routes
-├── components/   # Reusable UI components
-│   └── ui/      # Base UI components
-└── lib/         # Utility functions and shared code
-    └── db/      # Database schema and utilities
-```
-
-## Database Setup
-
-This project uses PostgreSQL with Drizzle ORM. See [DATABASE.md](./DATABASE.md) for detailed setup instructions.
-
-### Quick Database Setup
-
-1. Set up your PostgreSQL database
-2. Copy environment variables:
+1. **Clone the repository**
    ```bash
-   cp .env.example .env.local
-   ```
-3. Update `DATABASE_URL` in `.env.local`
-4. Push database schema:
-   ```bash
-   pnpm db:push
-   ```
-5. Seed initial data:
-   ```bash
-   pnpm db:seed
+   git clone <repository-url>
+   cd weekly_meals_planner
    ```
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- PostgreSQL database
-- pnpm package manager
-
-### Installation
-
-1. Install dependencies:
+2. **Install dependencies**
    ```bash
    pnpm install
    ```
 
-2. Set up environment variables:
+3. **Set up environment variables**
    ```bash
    cp .env.example .env.local
    ```
-   Update the `DATABASE_URL` with your PostgreSQL connection string.
-
-3. Set up the database:
+   
+   Edit `.env.local`:
    ```bash
-   pnpm db:push
-   pnpm db:seed
+   # Required for JWT authentication
+   NEXTAUTH_SECRET="your-secret-key-here"
+   
+   # Database configuration
+   NODE_ENV="development"  # Uses SQLite for development
+   
+   # For production (PostgreSQL)
+   # NODE_ENV="production"
+   # DATABASE_URL="postgresql://username:password@host:port/database"
    ```
 
-4. Run the development server:
+4. **Initialize the database**
+   ```bash
+   pnpm db:push
+   ```
+
+5. **Start the development server**
    ```bash
    pnpm dev
    ```
 
-5. Test the setup:
-   Visit http://localhost:3000/api/health to check database connectivity.
+6. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🗄️ Database Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+This project supports dual database environments:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Local Development (SQLite)
+- **Automatic**: Works out of the box with `NODE_ENV="development"`
+- **File**: Database stored in `./sqlite.db`
+- **No setup required**: Database file is created automatically
 
-## Learn More
+### Production (PostgreSQL)
+1. **Set up PostgreSQL** (e.g., on Vercel, Railway, or Supabase)
+2. **Update environment variables**:
+   ```bash
+   NODE_ENV="production"
+   DATABASE_URL="postgresql://username:password@host:port/database"
+   ```
+3. **Push schema to production**:
+   ```bash
+   pnpm db:push
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+### Database Commands
+```bash
+# Push schema to current database
+pnpm db:push
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Generate migrations
+pnpm db:generate
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# View database in Drizzle Studio
+pnpm db:studio
+```
 
-## Deploy on Vercel
+## 🔐 Authentication
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Quick Test
+Visit `/auth` to test the authentication system:
+1. Register a new account
+2. Login with your credentials
+3. Change your password
+4. View your profile
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### API Usage
+```typescript
+import { authApi } from '@/lib/auth-client';
+
+// Register
+const response = await authApi.register('username', 'password');
+
+// Login
+const loginResponse = await authApi.login('username', 'password');
+
+// Check if authenticated
+const isLoggedIn = authApi.isAuthenticated();
+```
+
+For detailed authentication documentation, see [AUTHENTICATION.md](./AUTHENTICATION.md).
+
+## 📁 Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   │   └── auth/          # Authentication endpoints
+│   ├── auth/              # Authentication demo page
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Homepage
+├── components/            # React components
+│   └── auth/              # Authentication components
+├── lib/                   # Utilities and configuration
+│   ├── db/                # Database configuration
+│   │   ├── db.ts          # Database setup
+│   │   └── schema.ts      # Database schema
+│   ├── auth.ts            # Server-side auth utilities
+│   ├── auth-client.ts     # Client-side auth utilities
+│   ├── middleware.ts      # Authentication middleware
+│   └── utils.ts           # General utilities
+```
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+1. **Connect your repository** to Vercel
+2. **Set environment variables** in Vercel dashboard:
+   ```bash
+   NEXTAUTH_SECRET="your-production-secret"
+   NODE_ENV="production"
+   DATABASE_URL="your-postgresql-url"
+   ```
+3. **Deploy**: Vercel will automatically build and deploy
+
+### Manual Deployment
+```bash
+# Build the application
+pnpm build
+
+# Start production server
+pnpm start
+```
+
+## 🧪 Development
+
+### Available Scripts
+```bash
+# Development
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
+
+# Database
+pnpm db:push      # Push schema to database
+pnpm db:generate  # Generate migrations
+pnpm db:studio    # Open Drizzle Studio
+```
+
+### Database Schema
+The project includes a comprehensive database schema for:
+- **Users** - User accounts and authentication
+- **Meals** - Individual meal entries
+- **Ingredients** - Ingredient database
+- **Recipes** - Recipe management
+- **Meal Plans** - Weekly meal planning
+- **Shopping Lists** - Auto-generated shopping lists
+- **Nutritional Goals** - User nutritional targets
+
+## 🔧 Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `NEXTAUTH_SECRET` | Secret key for JWT signing | Yes | - |
+| `NODE_ENV` | Environment (development/production) | Yes | development |
+| `DATABASE_URL` | PostgreSQL connection string | Production only | - |
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes
+4. Commit: `git commit -m 'Add feature'`
+5. Push: `git push origin feature-name`
+6. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Next.js](https://nextjs.org/)
+- Styled with [Tailwind CSS](https://tailwindcss.com/)
+- Database powered by [Drizzle ORM](https://orm.drizzle.team/)
+- Authentication using [bcryptjs](https://github.com/dcodeIO/bcrypt.js)
+
+## 📞 Support
+
+If you have any questions or need help:
+1. Check the [Authentication documentation](./AUTHENTICATION.md)
+2. Open an issue on GitHub
+3. Check the development server logs for errors
+
+---
+
+**Happy meal planning! 🍽️**

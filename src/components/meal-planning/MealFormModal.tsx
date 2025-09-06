@@ -2,15 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Meal } from './MealCard';
-
-interface SavedMeal {
-  id: string;
-  name: string;
-  mealType: string;
-  description?: string;
-  calories?: number;
-  prepTime?: number;
-}
+import { SavedMeal } from '../../lib/api/meals';
 
 interface MealFormModalProps {
   isOpen: boolean;
@@ -19,7 +11,7 @@ interface MealFormModalProps {
   editingMeal?: Meal | null;
   selectedDate?: Date;
   selectedCategory?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-  existingMeals?: Meal[]; // Pass current meals to show in saved meals dropdown
+  existingMeals?: SavedMeal[]; // Pass saved meals from API
 }
 
 export default function MealFormModal({
@@ -41,50 +33,12 @@ export default function MealFormModal({
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [isLoadingMeals, setIsLoadingMeals] = useState(false);
 
-  // Fetch saved meals when component mounts
+  // Use existing meals passed as prop
   useEffect(() => {
     if (isOpen) {
-      fetchSavedMeals();
+      setSavedMeals(existingMeals || []);
     }
-  }, [isOpen, existingMeals]); // Add existingMeals as dependency
-
-  const fetchSavedMeals = async () => {
-    setIsLoadingMeals(true);
-    try {
-      // Convert existing meals to SavedMeal format
-      const convertedMeals: SavedMeal[] = existingMeals.map(meal => ({
-        id: meal.id,
-        name: meal.name,
-        mealType: meal.category,
-        description: meal.description,
-        calories: meal.calories,
-        prepTime: meal.prepTime
-      }));
-
-      // Add some default meals if no existing meals
-      const defaultMeals: SavedMeal[] = existingMeals.length === 0 ? [
-        { id: 'default-1', name: 'Scrambled Eggs', mealType: 'breakfast', calories: 300, prepTime: 10 },
-        { id: 'default-2', name: 'Caesar Salad', mealType: 'lunch', calories: 450, prepTime: 15 },
-        { id: 'default-3', name: 'Grilled Chicken', mealType: 'dinner', calories: 600, prepTime: 30 },
-        { id: 'default-4', name: 'Greek Yogurt', mealType: 'snack', calories: 150, prepTime: 2 },
-      ] : [];
-
-      // Create unique meals list (prioritize existing meals over defaults)
-      const uniqueMeals = [...convertedMeals];
-      defaultMeals.forEach(defaultMeal => {
-        if (!uniqueMeals.some(meal => meal.name.toLowerCase() === defaultMeal.name.toLowerCase() && meal.mealType === defaultMeal.mealType)) {
-          uniqueMeals.push(defaultMeal);
-        }
-      });
-
-      setSavedMeals(uniqueMeals);
-    } catch (error) {
-      console.error('Failed to fetch saved meals:', error);
-      setSavedMeals([]);
-    } finally {
-      setIsLoadingMeals(false);
-    }
-  };
+  }, [isOpen, existingMeals]);
 
   useEffect(() => {
     if (editingMeal) {
@@ -119,6 +73,7 @@ export default function MealFormModal({
     e.preventDefault();
     
     const mealData: Omit<Meal, 'id'> = {
+      mealId: formData.selectedMealId || '', // Will be set by API if creating new meal
       name: formData.name,
       category: formData.category,
       time: formData.time || undefined

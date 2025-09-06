@@ -14,10 +14,12 @@ import {
 } from 'date-fns';
 import { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
+import { SavedMeal } from '../../lib/api/meals';
 
 interface MonthlyViewProps {
   currentDate: Date;
   meals: Meal[];
+  existingMeals?: SavedMeal[];
   onAddMeal: (meal: Omit<Meal, 'id'>, date: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;
@@ -27,6 +29,7 @@ interface MonthlyViewProps {
 export default function MonthlyView({
   currentDate,
   meals,
+  existingMeals = [],
   onAddMeal,
   onEditMeal,
   onDeleteMeal,
@@ -48,9 +51,16 @@ export default function MonthlyView({
   }
 
   const getMealsForDate = (date: Date) => {
-    // For demo purposes, return some meals
-    // In a real app, you'd filter meals by date
-    return meals.slice(0, Math.floor(Math.random() * 4));
+    // Filter meals by the specific date
+    return meals.filter(meal => {
+      if (meal.plannedDate) {
+        // Fix date parsing - create date in local timezone
+        const [year, month, day] = meal.plannedDate.split('-').map(Number);
+        const mealDate = new Date(year, month - 1, day); // month is 0-indexed
+        return isSameDay(mealDate, date);
+      }
+      return false;
+    });
   };
 
   const getDayMealCount = (date: Date) => {
@@ -257,7 +267,7 @@ export default function MonthlyView({
         onSave={handleSaveMeal}
         editingMeal={null}
         selectedDate={selectedDate || currentDate}
-        existingMeals={meals}
+        existingMeals={existingMeals}
       />
     </div>
   );

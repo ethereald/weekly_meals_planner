@@ -107,6 +107,18 @@ export const plannedMeals = sqliteTable('planned_meals', {
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
 });
 
+// Daily Planned Meals Table (Simpler approach for daily meal planning)
+export const dailyPlannedMeals = sqliteTable('daily_planned_meals', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  mealId: text('meal_id').notNull().references(() => meals.id),
+  plannedDate: text('planned_date').notNull(), // ISO date string (YYYY-MM-DD)
+  plannedTime: text('planned_time', { length: 20 }), // breakfast, lunch, dinner, snack
+  servings: integer('servings').default(2),
+  notes: text('notes'),
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+});
+
 // Shopping Lists Table
 export const shoppingLists = sqliteTable('shopping_lists', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -178,6 +190,7 @@ export const mealsRelations = relations(meals, ({ one, many }) => ({
   }),
   ingredients: many(mealIngredients),
   plannedMeals: many(plannedMeals),
+  dailyPlannedMeals: many(dailyPlannedMeals),
 }));
 
 export const mealIngredientsRelations = relations(mealIngredients, ({ one }) => ({
@@ -207,6 +220,17 @@ export const plannedMealsRelations = relations(plannedMeals, ({ one }) => ({
   }),
   meal: one(meals, {
     fields: [plannedMeals.mealId],
+    references: [meals.id],
+  }),
+}));
+
+export const dailyPlannedMealsRelations = relations(dailyPlannedMeals, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyPlannedMeals.userId],
+    references: [users.id],
+  }),
+  meal: one(meals, {
+    fields: [dailyPlannedMeals.mealId],
     references: [meals.id],
   }),
 }));

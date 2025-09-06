@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 import { authApi } from '../../lib/auth-client';
+import { mealsApi, PlannedMeal, SavedMeal } from '../../lib/api/meals';
 import MealPlanningLayout from '../../components/meal-planning/MealPlanningLayout';
 import DailyView from '../../components/meal-planning/DailyView';
 import WeeklyView from '../../components/meal-planning/WeeklyView';
@@ -14,10 +16,11 @@ export default function MealPlanningPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null);
 
-  // Load user and sample meals
+  // Load user and initialize data
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -26,81 +29,12 @@ export default function MealPlanningPage() {
         const user = { id: profile.user.id, username: profile.user.username };
         setCurrentUser(user);
 
-        // Sample meals with user information
-        const sampleMeals: Meal[] = [
-          {
-            id: '1',
-            name: 'Avocado Toast',
-            description: 'Whole grain bread with mashed avocado, cherry tomatoes, and feta cheese',
-            category: 'breakfast',
-            time: '08:00',
-            calories: 320,
-            prepTime: 10,
-            addedBy: {
-              userId: user.id,
-              username: user.username,
-              addedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Yesterday
-            }
-          },
-          {
-            id: '2',
-            name: 'Greek Salad',
-            description: 'Fresh vegetables with olives, feta cheese, and olive oil dressing',
-            category: 'lunch',
-            time: '12:30',
-            calories: 280,
-            prepTime: 15,
-            addedBy: {
-              userId: user.id,
-              username: user.username,
-              addedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
-            }
-          },
-          {
-            id: '3',
-            name: 'Grilled Salmon',
-            description: 'Atlantic salmon with roasted vegetables and quinoa',
-            category: 'dinner',
-            time: '19:00',
-            calories: 450,
-            prepTime: 25,
-            addedBy: {
-              userId: user.id,
-              username: user.username,
-              addedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
-            }
-          },
-          {
-            id: '4',
-            name: 'Mixed Nuts',
-            description: 'Almonds, walnuts, and cashews',
-            category: 'snack',
-            time: '15:30',
-            calories: 180,
-            prepTime: 0,
-            addedBy: {
-              userId: user.id,
-              username: user.username,
-              addedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() // 12 hours ago
-            }
-          },
-          {
-            id: '5',
-            name: 'Overnight Oats',
-            description: 'Oats with almond milk, chia seeds, and berries',
-            category: 'breakfast',
-            time: '07:30',
-            calories: 290,
-            prepTime: 5,
-            addedBy: {
-              userId: user.id,
-              username: user.username,
-              addedAt: new Date().toISOString() // Now
-            }
-          }
-        ];
-        
-        setMeals(sampleMeals);
+        // Load saved meals
+        const savedMealsData = await mealsApi.getSavedMeals();
+        setSavedMeals(savedMealsData);
+
+        // Load planned meals for current date
+        await loadPlannedMeals(currentDate);
       } catch (error) {
         console.error('Failed to load user data:', error);
         // Redirect to login if auth fails
@@ -113,29 +47,192 @@ export default function MealPlanningPage() {
     initializeData();
   }, [router]);
 
-  const handleAddMeal = (mealData: Omit<Meal, 'id'>, date?: Date) => {
+  // Load planned meals for a specific date or date range
+  const loadPlannedMeals = async (date: Date, dateRange?: { start: Date; end: Date }) => {
+    try {
+      let plannedMeals: PlannedMeal[] = [];
+      
+      if (dateRange) {
+        // For date ranges, we should ideally have a backend API that supports range queries
+        // For now, we'll optimize by loading fewer dates or using a different strategy
+        console.log('📅 Loading meals for range:', format(dateRange.start, 'yyyy-MM-dd'), 'to', format(dateRange.end, 'yyyy-MM-dd'));
+        
+        // For weekly view, load 7 days max
+        if (view === 'weekly') {
+          const promises = [];
+          const currentDate = new Date(dateRange.start);
+          for (let i = 0; i < 7; i++) {
+            const dateStr = format(currentDate, 'yyyy-MM-dd');
+            promises.push(mealsApi.getPlannedMeals(dateStr));
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+          const results = await Promise.all(promises);
+          plannedMeals = results.flat();
+        } else if (view === 'monthly') {
+          // For monthly view, load entire month
+          const promises = [];
+          const monthStart = new Date(dateRange.start);
+          const monthEnd = new Date(dateRange.end);
+          const currentDate = new Date(monthStart);
+          
+          while (currentDate <= monthEnd) {
+            const dateStr = format(currentDate, 'yyyy-MM-dd');
+            promises.push(mealsApi.getPlannedMeals(dateStr));
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+          
+          const results = await Promise.all(promises);
+          plannedMeals = results.flat();
+        } else {
+          // For other views, load current date only
+          const dateStr = format(date, 'yyyy-MM-dd');
+          plannedMeals = await mealsApi.getPlannedMeals(dateStr);
+        }
+      } else {
+        // Load meals for a single date (for daily view)
+        const dateStr = format(date, 'yyyy-MM-dd');
+        plannedMeals = await mealsApi.getPlannedMeals(dateStr);
+      }
+      
+      // Convert API response to Meal interface
+      const convertedMeals: Meal[] = plannedMeals.map((plannedMeal: PlannedMeal) => ({
+        id: plannedMeal.id,
+        mealId: plannedMeal.mealId,
+        name: plannedMeal.meal.name,
+        description: plannedMeal.meal.description || undefined,
+        category: plannedMeal.meal.mealType as 'breakfast' | 'lunch' | 'dinner' | 'snack',
+        time: plannedMeal.plannedTime || undefined,
+        calories: plannedMeal.meal.calories || undefined,
+        prepTime: plannedMeal.meal.prepTime || undefined,
+        plannedDate: plannedMeal.plannedDate,
+        meal: plannedMeal.meal,
+        addedBy: {
+          userId: plannedMeal.meal.userId,
+          username: currentUser?.username || 'Unknown',
+          addedAt: plannedMeal.meal.createdAt
+        }
+      }));
+      
+      console.log('✅ Loaded', convertedMeals.length, 'meals for', view, 'view');
+      setMeals(convertedMeals);
+    } catch (error) {
+      console.error('Failed to load planned meals:', error);
+      setMeals([]);
+    }
+  };
+
+  // Helper function to get date range based on current view
+  const getDateRange = (date: Date, viewType: 'daily' | 'weekly' | 'monthly') => {
+    const start = new Date(date);
+    const end = new Date(date);
+    
+    switch (viewType) {
+      case 'weekly':
+        // Get start of week (Sunday) and end of week (Saturday)
+        const startOfWeek = start.getDate() - start.getDay();
+        start.setDate(startOfWeek);
+        end.setDate(startOfWeek + 6);
+        break;
+      case 'monthly':
+        // Get start and end of month
+        start.setDate(1);
+        end.setMonth(end.getMonth() + 1, 0);
+        break;
+      case 'daily':
+      default:
+        // For daily view, start and end are the same date
+        break;
+    }
+    
+    return { start, end };
+  };
+
+  // Reload meals when current date or view changes
+  useEffect(() => {
+    if (currentUser) {
+      console.log('🔄 Reloading meals for:', view, 'view, date:', format(currentDate, 'yyyy-MM-dd'));
+      const dateRange = getDateRange(currentDate, view);
+      if (view === 'daily') {
+        loadPlannedMeals(currentDate);
+      } else {
+        console.log('📅 Loading date range:', format(dateRange.start, 'yyyy-MM-dd'), 'to', format(dateRange.end, 'yyyy-MM-dd'));
+        loadPlannedMeals(currentDate, dateRange);
+      }
+    }
+  }, [currentDate, view, currentUser]);
+
+  const handleAddMeal = async (mealData: Omit<Meal, 'id'>, date?: Date) => {
     if (!currentUser) return;
     
-    const newMeal: Meal = {
-      ...mealData,
-      id: Date.now().toString(),
-      addedBy: {
-        userId: currentUser.id,
-        username: currentUser.username,
-        addedAt: new Date().toISOString()
+    const targetDate = date || currentDate;
+    const dateStr = format(targetDate, 'yyyy-MM-dd');
+    
+    try {
+      console.log('➕ Adding meal for date:', dateStr, 'in', view, 'view');
+      
+      const plannedMeal = await mealsApi.createPlannedMeal({
+        name: mealData.name,
+        category: mealData.category,
+        time: mealData.time,
+        plannedDate: dateStr,
+        description: mealData.description,
+        calories: mealData.calories,
+        prepTime: mealData.prepTime,
+      });
+
+      if (plannedMeal) {
+        console.log('✅ Meal created successfully, reloading data...');
+        
+        // Always reload based on current view and ensure fresh data
+        const dateRange = getDateRange(currentDate, view);
+        if (view === 'daily') {
+          await loadPlannedMeals(currentDate);
+        } else {
+          await loadPlannedMeals(currentDate, dateRange);
+        }
+        
+        // Reload saved meals to update the dropdown
+        const savedMealsData = await mealsApi.getSavedMeals();
+        setSavedMeals(savedMealsData);
+        
+        console.log('🔄 Data reloaded after meal addition');
       }
-    };
-    setMeals(prev => [...prev, newMeal]);
+    } catch (error) {
+      console.error('Failed to add meal:', error);
+    }
   };
 
-  const handleEditMeal = (id: string, mealData: Omit<Meal, 'id'>) => {
-    setMeals(prev => prev.map(meal => 
-      meal.id === id ? { ...mealData, id } : meal
-    ));
+  const handleEditMeal = async (id: string, mealData: Omit<Meal, 'id'>) => {
+    // For now, we'll implement this as delete + create
+    // In a real app, you'd want a proper update endpoint
+    try {
+      await handleDeleteMeal(id);
+      await handleAddMeal(mealData);
+    } catch (error) {
+      console.error('Failed to edit meal:', error);
+    }
   };
 
-  const handleDeleteMeal = (id: string) => {
-    setMeals(prev => prev.filter(meal => meal.id !== id));
+  const handleDeleteMeal = async (id: string) => {
+    try {
+      const success = await mealsApi.deletePlannedMeal(id);
+      if (success) {
+        // Reload meals based on current view to ensure consistency
+        const dateRange = getDateRange(currentDate, view);
+        if (view === 'daily') {
+          await loadPlannedMeals(currentDate);
+        } else {
+          await loadPlannedMeals(currentDate, dateRange);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete meal:', error);
+    }
+  };
+
+  const handleViewChange = (newView: 'daily' | 'weekly' | 'monthly') => {
+    setView(newView);
+    // The useEffect will automatically reload meals when view changes
   };
 
   const handleDateSelect = (date: Date) => {
@@ -159,12 +256,13 @@ export default function MealPlanningPage() {
       currentDate={currentDate}
       onDateChange={setCurrentDate}
       view={view}
-      onViewChange={setView}
+      onViewChange={handleViewChange}
     >
       {view === 'daily' && (
         <DailyView
           currentDate={currentDate}
           meals={meals}
+          existingMeals={savedMeals}
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}
@@ -175,6 +273,7 @@ export default function MealPlanningPage() {
         <WeeklyView
           currentDate={currentDate}
           meals={meals}
+          existingMeals={savedMeals}
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}
@@ -185,6 +284,7 @@ export default function MealPlanningPage() {
         <MonthlyView
           currentDate={currentDate}
           meals={meals}
+          existingMeals={savedMeals}
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}

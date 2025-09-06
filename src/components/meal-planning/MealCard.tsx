@@ -4,13 +4,26 @@ import { useState } from 'react';
 import { formatDistanceToNow, format } from 'date-fns';
 
 export interface Meal {
-  id: string;
+  id: string; // This is the planned meal ID
+  mealId: string; // This is the actual meal ID
   name: string;
   description?: string;
   category: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   time?: string;
   calories?: number;
   prepTime?: number;
+  plannedDate?: string;
+  meal?: {
+    id: string;
+    userId: string;
+    name: string;
+    description: string | null;
+    mealType: string;
+    calories: number | null;
+    prepTime: number | null;
+    createdAt: string;
+    updatedAt: string;
+  };
   addedBy?: {
     userId: string;
     username: string;
@@ -50,8 +63,8 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(meal.category)}`}>
-              {meal.category}
+            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(meal.meal?.mealType || meal.category)}`}>
+              {meal.meal?.mealType || meal.category}
             </span>
             {meal.time && (
               <span className="text-xs text-gray-500">{meal.time}</span>
@@ -59,31 +72,31 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
           </div>
           
           <h3 className={`font-semibold text-gray-900 truncate ${compact ? 'text-sm' : 'text-base'}`}>
-            {meal.name}
+            {meal.meal?.name || meal.name}
           </h3>
           
-          {meal.description && !compact && (
+          {(meal.meal?.description || meal.description) && !compact && (
             <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-              {meal.description}
+              {meal.meal?.description || meal.description}
             </p>
           )}
           
-          {(meal.calories || meal.prepTime) && (
+          {((meal.meal?.calories || meal.calories) || (meal.meal?.prepTime || meal.prepTime)) && (
             <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-              {meal.calories && (
+              {(meal.meal?.calories || meal.calories) && (
                 <span className="flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  {meal.calories} cal
+                  {meal.meal?.calories || meal.calories} cal
                 </span>
               )}
-              {meal.prepTime && (
+              {(meal.meal?.prepTime || meal.prepTime) && (
                 <span className="flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {meal.prepTime}m
+                  {meal.meal?.prepTime || meal.prepTime}m
                 </span>
               )}
             </div>

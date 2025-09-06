@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import MealCard, { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
+import { SavedMeal } from '../../lib/api/meals';
 
 interface DailyViewProps {
   currentDate: Date;
   meals: Meal[];
-  onAddMeal: (meal: Omit<Meal, 'id'>) => void;
+  existingMeals?: SavedMeal[];
+  onAddMeal: (meal: Omit<Meal, 'id'>, date?: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;
 }
@@ -16,6 +18,7 @@ interface DailyViewProps {
 export default function DailyView({
   currentDate,
   meals,
+  existingMeals = [],
   onAddMeal,
   onEditMeal,
   onDeleteMeal
@@ -31,8 +34,80 @@ export default function DailyView({
     { key: 'snack', label: 'Snacks', icon: '🍿' }
   ] as const;
 
+  // Test function to debug the filtering issue
+  const testFiltering = () => {
+    const testMeal = meals[0]; // Get the first meal
+    if (!testMeal) return "No meals to test";
+    
+    const mealCategory = testMeal.meal?.mealType || testMeal.category;
+    const categoryMatch = mealCategory === 'dinner';
+    
+    if (testMeal.plannedDate) {
+      // Fix date parsing - create date in local timezone
+      const [year, month, day] = testMeal.plannedDate.split('-').map(Number);
+      const mealDate = new Date(year, month - 1, day); // month is 0-indexed
+      const dateMatch = isSameDay(mealDate, currentDate);
+      
+      return {
+        mealName: testMeal.name,
+        mealCategory,
+        categoryMatch,
+        plannedDate: testMeal.plannedDate,
+        mealDateParsed: mealDate.toString(),
+        currentDate: currentDate.toString(),
+        dateMatch,
+        shouldShow: categoryMatch && dateMatch
+      };
+    }
+    
+    return "No planned date";
+  };
+
   const getMealsForCategory = (category: string) => {
-    return meals.filter(meal => meal.category === category);
+    console.log(`🔍 getMealsForCategory called for "${category}"`);
+    console.log('📊 Total meals to filter:', meals.length);
+    
+    const filteredMeals = meals.filter(meal => {
+      const mealCategory = meal.meal?.mealType || meal.category;
+      
+      console.log('🔍 Filtering meal:', {
+        mealName: meal.name,
+        mealCategory,
+        requestedCategory: category,
+        plannedDate: meal.plannedDate,
+        currentDate: format(currentDate, 'yyyy-MM-dd'),
+      });
+      
+      // Check category match first
+      const categoryMatch = mealCategory === category;
+      console.log('📊 Category match:', mealCategory, '===', category, '→', categoryMatch);
+      
+      // Only show meals for the current date
+      if (meal.plannedDate) {
+        // Fix date parsing - create date in local timezone
+        const [year, month, day] = meal.plannedDate.split('-').map(Number);
+        const mealDate = new Date(year, month - 1, day); // month is 0-indexed
+        const dateMatch = isSameDay(mealDate, currentDate);
+        
+        console.log('📊 Date comparison:', {
+          mealDateString: meal.plannedDate,
+          mealDateParsed: format(mealDate, 'yyyy-MM-dd'),
+          currentDateFormatted: format(currentDate, 'yyyy-MM-dd'),
+          dateMatch,
+          categoryMatch,
+          finalResult: categoryMatch && dateMatch
+        });
+        
+        return categoryMatch && dateMatch;
+      }
+      
+      // If no plannedDate, just check category
+      console.log('⚠️ No plannedDate, using category only:', categoryMatch);
+      return categoryMatch;
+    });
+    
+    console.log(`✅ Category "${category}" filtered meals:`, filteredMeals.length, filteredMeals);
+    return filteredMeals;
   };
 
   const handleAddMeal = (category: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
@@ -51,7 +126,7 @@ export default function DailyView({
     if (editingMeal) {
       onEditMeal(editingMeal.id, mealData);
     } else {
-      onAddMeal(mealData);
+      onAddMeal(mealData, currentDate); // Pass the current date
     }
   };
 
@@ -61,6 +136,30 @@ export default function DailyView({
 
   return (
     <div className="space-y-6">
+      {/* Debug Info */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="text-sm text-yellow-800">
+          <strong>Debug Info:</strong> Total meals: {meals.length}, Current date: {format(currentDate, 'yyyy-MM-dd')}
+          <br />
+          <strong>Meals data:</strong> {JSON.stringify(meals.map(m => ({
+            name: m.name,
+            category: m.category,
+            mealType: m.meal?.mealType,
+            plannedDate: m.plannedDate
+          })), null, 2)}
+          <br />
+          <strong>Dinner meals:</strong> {getMealsForCategory('dinner').length}
+          <br />
+          <strong>Breakfast meals:</strong> {getMealsForCategory('breakfast').length}
+          <br />
+          <strong>Lunch meals:</strong> {getMealsForCategory('lunch').length}
+          <br />
+          <strong>Snack meals:</strong> {getMealsForCategory('snack').length}
+          <br />
+          <strong>Filter test:</strong> {JSON.stringify(testFiltering(), null, 2)}
+        </div>
+      </div>
+      
       {/* Daily Summary */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
@@ -153,7 +252,7 @@ export default function DailyView({
         editingMeal={editingMeal}
         selectedDate={currentDate}
         selectedCategory={selectedCategory}
-        existingMeals={meals}
+        existingMeals={existingMeals}
       />
     </div>
   );

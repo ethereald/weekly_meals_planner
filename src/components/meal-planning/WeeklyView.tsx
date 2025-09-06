@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import MealCard, { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
+import { SavedMeal } from '../../lib/api/meals';
 
 interface WeeklyViewProps {
   currentDate: Date;
   meals: Meal[];
+  existingMeals?: SavedMeal[];
   onAddMeal: (meal: Omit<Meal, 'id'>, date: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;
@@ -16,6 +18,7 @@ interface WeeklyViewProps {
 export default function WeeklyView({
   currentDate,
   meals,
+  existingMeals = [],
   onAddMeal,
   onEditMeal,
   onDeleteMeal
@@ -36,9 +39,17 @@ export default function WeeklyView({
   ] as const;
 
   const getMealsForDateAndCategory = (date: Date, category: string) => {
-    // For demo purposes, we'll filter meals by a date property
-    // In a real app, you'd have meals with associated dates
-    return meals.filter(meal => meal.category === category);
+    return meals.filter(meal => {
+      const mealCategory = meal.meal?.mealType || meal.category;
+      // Filter by both date and category
+      if (meal.plannedDate) {
+        // Fix date parsing - create date in local timezone
+        const [year, month, day] = meal.plannedDate.split('-').map(Number);
+        const mealDate = new Date(year, month - 1, day); // month is 0-indexed
+        return mealCategory === category && isSameDay(mealDate, date);
+      }
+      return mealCategory === category && isSameDay(date, new Date()); // Fallback for meals without plannedDate
+    });
   };
 
   const handleAddMeal = (date: Date, category: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
@@ -108,13 +119,13 @@ export default function WeeklyView({
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="grid grid-cols-8 divide-x divide-gray-200">
           {/* Header */}
-          <div className="bg-gray-50 p-4">
+          <div className="bg-gray-50 p-4 min-w-0">
             <div className="text-sm font-medium text-gray-900">Meals</div>
           </div>
           {weekDays.map((day) => {
             const isToday = isSameDay(day, new Date());
             return (
-              <div key={day.toISOString()} className={`p-4 ${isToday ? 'bg-blue-50' : 'bg-gray-50'}`}>
+              <div key={day.toISOString()} className={`p-4 min-w-0 ${isToday ? 'bg-blue-50' : 'bg-gray-50'}`}>
                 <div className={`text-sm font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
                   {format(day, 'EEE')}
                 </div>
@@ -129,7 +140,7 @@ export default function WeeklyView({
           {mealCategories.map((category) => (
             <div key={category.key} className="contents">
               {/* Category Label */}
-              <div className={`p-4 bg-gray-50 border-l-4 ${category.color} flex items-center`}>
+              <div className={`p-4 bg-gray-50 border-l-4 ${category.color} flex items-center min-w-0`}>
                 <div className="text-sm font-medium text-gray-900 capitalize">
                   {category.label}
                 </div>
@@ -141,7 +152,7 @@ export default function WeeklyView({
                 const isToday = isSameDay(day, new Date());
                 
                 return (
-                  <div key={`${day.toISOString()}-${category.key}`} className={`p-2 min-h-[120px] ${
+                  <div key={`${day.toISOString()}-${category.key}`} className={`p-2 min-h-[120px] min-w-0 ${
                     isToday ? 'bg-blue-25' : ''
                   }`}>
                     <div className="space-y-2">
@@ -187,7 +198,7 @@ export default function WeeklyView({
         editingMeal={editingMeal}
         selectedDate={selectedDate || currentDate}
         selectedCategory={selectedCategory}
-        existingMeals={meals}
+        existingMeals={existingMeals}
       />
     </div>
   );

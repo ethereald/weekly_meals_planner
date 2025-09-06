@@ -1,7 +1,13 @@
 import { pgTable, uuid, varchar, text, timestamp, boolean, integer, decimal, pgEnum } from 'drizzle-orm/pg-core';
+import { sqliteTable, text as sqliteText, integer as sqliteInteger, real } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
-// Enums
+// Check if we're using PostgreSQL or SQLite
+const isProduction = process.env.NODE_ENV === 'production';
+const hasDbUrl = Boolean(process.env.DATABASE_URL);
+const usePostgres = isProduction && hasDbUrl;
+
+// PostgreSQL Enums (only used in production)
 export const dietaryRestrictionEnum = pgEnum('dietary_restriction', [
   'vegetarian',
   'vegan',
@@ -29,14 +35,26 @@ export const difficultyEnum = pgEnum('difficulty', [
   'hard'
 ]);
 
-// Users Table
-export const users = pgTable('users', {
+// Users Table - PostgreSQL version
+const pgUsers = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   username: varchar('username', { length: 255 }).notNull().unique(),
   password: varchar('password', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+// Users Table - SQLite version  
+const sqliteUsers = sqliteTable('users', {
+  id: sqliteText('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  username: sqliteText('username', { length: 255 }).notNull().unique(),
+  password: sqliteText('password', { length: 255 }).notNull(),
+  createdAt: sqliteText('created_at').$defaultFn(() => new Date().toISOString()),
+  updatedAt: sqliteText('updated_at').$defaultFn(() => new Date().toISOString()),
+});
+
+// Export the appropriate table based on environment
+export const users = usePostgres ? pgUsers : sqliteUsers;
 
 // User Settings Table
 export const userSettings = pgTable('user_settings', {

@@ -1,4 +1,4 @@
-import * as schema from './schema';
+import * as sqliteSchema from './sqlite-schema';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any;
@@ -14,6 +14,8 @@ if (isProduction && hasDbUrl) {
   const { drizzle } = require('drizzle-orm/postgres-js');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const postgres = require('postgres');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const schema = require('./schema');
   client = postgres(process.env.DATABASE_URL, {
     prepare: false,
     max: 10,
@@ -36,7 +38,7 @@ if (isProduction && hasDbUrl) {
     client = createClient({
       url: `file:${dbPath}`
     });
-    db = drizzle(client, { schema });
+    db = drizzle(client, { schema: sqliteSchema });
     
     console.log('SQLite database initialized successfully');
   } catch (error) {
@@ -52,7 +54,9 @@ if (isProduction && hasDbUrl) {
 }
 
 export { db, client };
-export * from './schema';
+
+// For development, export SQLite schema
+export * from './sqlite-schema';
 
 // Database initialization and health check
 export function isDatabaseAvailable(): boolean {

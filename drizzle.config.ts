@@ -6,7 +6,7 @@ dotenv.config({ path: '.env.local' });
 const isProduction = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
-  schema: './src/lib/db/schema.ts',
+  schema: isProduction ? './src/lib/db/schema.ts' : './src/lib/db/sqlite-schema.ts',
   out: './src/lib/db/migrations',
   dialect: isProduction ? 'postgresql' : 'sqlite',
   dbCredentials: isProduction 

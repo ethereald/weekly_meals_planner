@@ -1,5 +1,5 @@
 import { db } from './index';
-import { users, userSettings, categories } from './schema';
+import { users, userSettings, categories } from './index';
 import { eq } from 'drizzle-orm';
 
 // Test database connection
@@ -109,7 +109,7 @@ export async function createDefaultUserSettings(userId: string) {
   try {
     const newSettings = await db.insert(userSettings).values({
       userId,
-      dietaryRestrictions: [],
+      dietaryRestrictions: JSON.stringify([]), // Convert array to JSON string for SQLite
       preferredMealTimes: JSON.stringify({
         breakfast: '08:00',
         lunch: '12:00',

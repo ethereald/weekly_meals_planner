@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { db } from '@/lib/db';
-import { meals, dailyPlannedMeals } from '@/lib/db/sqlite-schema';
-import { eq, and } from 'drizzle-orm';
+import { meals, dailyPlannedMeals, users } from '@/lib/db/sqlite-schema';
+import { eq, and, gte, lte } from 'drizzle-orm';
 
 async function getHandler(request: AuthenticatedRequest) {
   try {
-    const userId = request.user!.userId;
-
     // Get query parameters for filtering
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
     
     if (date) {
-      // Get planned meals for a specific date
+      // Get planned meals for a specific date from ALL users with creator info
       const plannedMealsData = await db
         .select({
           id: dailyPlannedMeals.id,
@@ -22,26 +22,52 @@ async function getHandler(request: AuthenticatedRequest) {
           plannedTime: dailyPlannedMeals.plannedTime,
           servings: dailyPlannedMeals.servings,
           notes: dailyPlannedMeals.notes,
-          meal: meals
+          meal: meals,
+          creator: {
+            userId: users.id,
+            username: users.username
+          }
         })
         .from(dailyPlannedMeals)
         .innerJoin(meals, eq(dailyPlannedMeals.mealId, meals.id))
+        .innerJoin(users, eq(meals.userId, users.id))
+        .where(eq(dailyPlannedMeals.plannedDate, date));
+
+      return NextResponse.json({ meals: plannedMealsData });
+    } else if (startDate && endDate) {
+      // Get planned meals for a date range from ALL users with creator info
+      const plannedMealsData = await db
+        .select({
+          id: dailyPlannedMeals.id,
+          mealId: dailyPlannedMeals.mealId,
+          plannedDate: dailyPlannedMeals.plannedDate,
+          plannedTime: dailyPlannedMeals.plannedTime,
+          servings: dailyPlannedMeals.servings,
+          notes: dailyPlannedMeals.notes,
+          meal: meals,
+          creator: {
+            userId: users.id,
+            username: users.username
+          }
+        })
+        .from(dailyPlannedMeals)
+        .innerJoin(meals, eq(dailyPlannedMeals.mealId, meals.id))
+        .innerJoin(users, eq(meals.userId, users.id))
         .where(
           and(
-            eq(dailyPlannedMeals.userId, userId),
-            eq(dailyPlannedMeals.plannedDate, date)
+            gte(dailyPlannedMeals.plannedDate, startDate),
+            lte(dailyPlannedMeals.plannedDate, endDate)
           )
         );
 
       return NextResponse.json({ meals: plannedMealsData });
     } else {
-      // Get all user's meals (for saved meals dropdown)
-      const userMeals = await db
+      // Get all meals from ALL users (for saved meals dropdown)
+      const allMeals = await db
         .select()
-        .from(meals)
-        .where(eq(meals.userId, userId));
+        .from(meals);
 
-      return NextResponse.json({ meals: userMeals });
+      return NextResponse.json({ meals: allMeals });
     }
   } catch (error) {
     console.error('Error fetching meals:', error);
@@ -60,16 +86,11 @@ async function postHandler(request: AuthenticatedRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // First, check if a meal with this name already exists for this user
+    // First, check if a meal with this name already exists (from any user)
     let existingMeal = await db
       .select()
       .from(meals)
-      .where(
-        and(
-          eq(meals.userId, userId),
-          eq(meals.name, name)
-        )
-      )
+      .where(eq(meals.name, name))
       .limit(1);
 
     let mealId: string;
@@ -105,7 +126,7 @@ async function postHandler(request: AuthenticatedRequest) {
       })
       .returning();
 
-    // Return the complete meal data
+    // Return the complete meal data with creator info
     const completeMeal = await db
       .select({
         id: dailyPlannedMeals.id,
@@ -114,10 +135,15 @@ async function postHandler(request: AuthenticatedRequest) {
         plannedTime: dailyPlannedMeals.plannedTime,
         servings: dailyPlannedMeals.servings,
         notes: dailyPlannedMeals.notes,
-        meal: meals
+        meal: meals,
+        creator: {
+          userId: users.id,
+          username: users.username
+        }
       })
       .from(dailyPlannedMeals)
       .innerJoin(meals, eq(dailyPlannedMeals.mealId, meals.id))
+      .innerJoin(users, eq(meals.userId, users.id))
       .where(eq(dailyPlannedMeals.id, plannedMeal[0].id))
       .limit(1);
 
@@ -139,8 +165,8 @@ async function deleteHandler(request: AuthenticatedRequest) {
       return NextResponse.json({ error: 'Planned meal ID required' }, { status: 400 });
     }
 
-    // Delete the planned meal (not the meal itself, as it might be used elsewhere)
-    await db
+    // Delete the planned meal (only if it belongs to the current user)
+    const result = await db
       .delete(dailyPlannedMeals)
       .where(
         and(

@@ -18,6 +18,10 @@ export interface PlannedMeal {
     createdAt: string;
     updatedAt: string;
   };
+  creator: {
+    userId: string;
+    username: string;
+  };
 }
 
 export interface SavedMeal {
@@ -49,6 +53,26 @@ export const mealsApi = {
       return data.meals || [];
     } catch (error) {
       console.error('Error fetching planned meals:', error);
+      return [];
+    }
+  },
+
+  // Get planned meals for a date range
+  async getPlannedMealsInRange(startDate: string, endDate: string): Promise<PlannedMeal[]> {
+    try {
+      const response = await fetch(`/api/meals?startDate=${startDate}&endDate=${endDate}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch planned meals for date range');
+      }
+      
+      const data = await response.json();
+      return data.meals || [];
+    } catch (error) {
+      console.error('Error fetching planned meals for date range:', error);
       return [];
     }
   },

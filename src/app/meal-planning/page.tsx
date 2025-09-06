@@ -53,43 +53,14 @@ export default function MealPlanningPage() {
       let plannedMeals: PlannedMeal[] = [];
       
       if (dateRange) {
-        // For date ranges, we should ideally have a backend API that supports range queries
-        // For now, we'll optimize by loading fewer dates or using a different strategy
+        // Use the new date range API for more efficient loading
         console.log('📅 Loading meals for range:', format(dateRange.start, 'yyyy-MM-dd'), 'to', format(dateRange.end, 'yyyy-MM-dd'));
         
-        // For weekly view, load 7 days max
-        if (view === 'weekly') {
-          const promises = [];
-          const currentDate = new Date(dateRange.start);
-          for (let i = 0; i < 7; i++) {
-            const dateStr = format(currentDate, 'yyyy-MM-dd');
-            promises.push(mealsApi.getPlannedMeals(dateStr));
-            currentDate.setDate(currentDate.getDate() + 1);
-          }
-          const results = await Promise.all(promises);
-          plannedMeals = results.flat();
-        } else if (view === 'monthly') {
-          // For monthly view, load entire month
-          const promises = [];
-          const monthStart = new Date(dateRange.start);
-          const monthEnd = new Date(dateRange.end);
-          const currentDate = new Date(monthStart);
-          
-          while (currentDate <= monthEnd) {
-            const dateStr = format(currentDate, 'yyyy-MM-dd');
-            promises.push(mealsApi.getPlannedMeals(dateStr));
-            currentDate.setDate(currentDate.getDate() + 1);
-          }
-          
-          const results = await Promise.all(promises);
-          plannedMeals = results.flat();
-        } else {
-          // For other views, load current date only
-          const dateStr = format(date, 'yyyy-MM-dd');
-          plannedMeals = await mealsApi.getPlannedMeals(dateStr);
-        }
+        const startDateStr = format(dateRange.start, 'yyyy-MM-dd');
+        const endDateStr = format(dateRange.end, 'yyyy-MM-dd');
+        plannedMeals = await mealsApi.getPlannedMealsInRange(startDateStr, endDateStr);
       } else {
-        // Load meals for a single date (for daily view)
+        // Load meals for a single date
         const dateStr = format(date, 'yyyy-MM-dd');
         plannedMeals = await mealsApi.getPlannedMeals(dateStr);
       }
@@ -107,8 +78,8 @@ export default function MealPlanningPage() {
         plannedDate: plannedMeal.plannedDate,
         meal: plannedMeal.meal,
         addedBy: {
-          userId: plannedMeal.meal.userId,
-          username: currentUser?.username || 'Unknown',
+          userId: plannedMeal.creator.userId,
+          username: plannedMeal.creator.username,
           addedAt: plannedMeal.meal.createdAt
         }
       }));

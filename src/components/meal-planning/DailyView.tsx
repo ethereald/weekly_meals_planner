@@ -221,26 +221,26 @@ export default function DailyView({
       )}
       
       {/* Daily Summary */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
             {format(currentDate, 'EEEE, MMMM d, yyyy')}
           </h2>
-          <div className="text-sm text-gray-600">
-            Total: <span className="font-semibold text-gray-900">{getTotalCalories()} calories</span>
+          <div className="text-sm text-gray-600 flex-shrink-0">
+            Total: <span className="font-semibold text-gray-900">{getTotalCalories()} cal</span>
           </div>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
           {mealCategories.map((category) => {
             const categoryMeals = getMealsForCategory(category.key);
             const categoryCalories = categoryMeals.reduce((total, meal) => total + (meal.calories || 0), 0);
             
             return (
-              <div key={category.key} className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-2xl mb-1">{category.icon}</div>
-                <div className="text-sm font-medium text-gray-900">{category.label}</div>
-                <div className="text-xs text-gray-600">{categoryMeals.length} meals</div>
+              <div key={category.key} className="text-center p-2 sm:p-3 bg-gray-50 rounded-lg">
+                <div className="text-xl sm:text-2xl mb-1">{category.icon}</div>
+                <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{category.label}</div>
+                <div className="text-xs text-gray-600">{categoryMeals.length} meal{categoryMeals.length !== 1 ? 's' : ''}</div>
                 <div className="text-xs text-gray-600">{categoryCalories} cal</div>
               </div>
             );

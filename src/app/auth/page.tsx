@@ -59,7 +59,33 @@ export default function AuthPage() {
   }
 
   if (!isAuthenticated) {
-    return <AuthWrapper onSuccess={() => window.location.reload()} />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-lg w-full space-y-8">
+          <div className="text-center">
+            <div className="mx-auto h-16 w-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Weekly Meals Planner
+            </h1>
+            <p className="text-lg text-gray-600 mb-8">
+              Plan your meals, track nutrition, and simplify your cooking routine
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+            <AuthWrapper onSuccess={() => window.location.reload()} />
+          </div>
+          <div className="text-center">
+            <p className="text-sm text-gray-500">
+              Start your journey to better meal planning today
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -59,9 +59,11 @@ export async function POST(request: NextRequest) {
     const [newUser] = await db.insert(users).values({
       username,
       password: hashedPassword,
+      role: 'user', // Default role for new registrations
     }).returning({
       id: users.id,
       username: users.username,
+      role: users.role,
       createdAt: users.createdAt,
     });
 

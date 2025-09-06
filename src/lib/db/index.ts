@@ -14,8 +14,10 @@ if (isProduction && hasDbUrl) {
   const { drizzle } = require('drizzle-orm/postgres-js');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const postgres = require('postgres');
+  
+  // Use SQLite schema for now since we don't have a proper PostgreSQL schema
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const schema = require('./schema');
+  const schema = require('./sqlite-schema');
   client = postgres(process.env.DATABASE_URL, {
     prepare: false,
     max: 10,

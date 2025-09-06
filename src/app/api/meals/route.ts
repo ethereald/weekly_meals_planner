@@ -100,7 +100,7 @@ async function postHandler(request: AuthenticatedRequest) {
     }
 
     // First, check if a meal with this name already exists (from any user)
-    let existingMeal = await db
+    const existingMeal = await db
       .select()
       .from(meals)
       .where(eq(meals.name, name))

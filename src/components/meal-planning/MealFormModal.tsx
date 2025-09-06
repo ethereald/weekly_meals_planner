@@ -3,6 +3,15 @@
 import { useState, useEffect } from 'react';
 import { Meal } from './MealCard';
 
+interface SavedMeal {
+  id: string;
+  name: string;
+  mealType: string;
+  description?: string;
+  calories?: number;
+  prepTime?: number;
+}
+
 interface MealFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -10,6 +19,7 @@ interface MealFormModalProps {
   editingMeal?: Meal | null;
   selectedDate?: Date;
   selectedCategory?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  existingMeals?: Meal[]; // Pass current meals to show in saved meals dropdown
 }
 
 export default function MealFormModal({
@@ -18,49 +28,100 @@ export default function MealFormModal({
   onSave,
   editingMeal,
   selectedDate,
-  selectedCategory
+  selectedCategory,
+  existingMeals = []
 }: MealFormModalProps) {
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     category: 'breakfast' as 'breakfast' | 'lunch' | 'dinner' | 'snack',
     time: '',
-    calories: '',
-    prepTime: ''
+    selectedMealId: ''
   });
+
+  const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
+  const [isLoadingMeals, setIsLoadingMeals] = useState(false);
+
+  // Fetch saved meals when component mounts
+  useEffect(() => {
+    if (isOpen) {
+      fetchSavedMeals();
+    }
+  }, [isOpen, existingMeals]); // Add existingMeals as dependency
+
+  const fetchSavedMeals = async () => {
+    setIsLoadingMeals(true);
+    try {
+      // Convert existing meals to SavedMeal format
+      const convertedMeals: SavedMeal[] = existingMeals.map(meal => ({
+        id: meal.id,
+        name: meal.name,
+        mealType: meal.category,
+        description: meal.description,
+        calories: meal.calories,
+        prepTime: meal.prepTime
+      }));
+
+      // Add some default meals if no existing meals
+      const defaultMeals: SavedMeal[] = existingMeals.length === 0 ? [
+        { id: 'default-1', name: 'Scrambled Eggs', mealType: 'breakfast', calories: 300, prepTime: 10 },
+        { id: 'default-2', name: 'Caesar Salad', mealType: 'lunch', calories: 450, prepTime: 15 },
+        { id: 'default-3', name: 'Grilled Chicken', mealType: 'dinner', calories: 600, prepTime: 30 },
+        { id: 'default-4', name: 'Greek Yogurt', mealType: 'snack', calories: 150, prepTime: 2 },
+      ] : [];
+
+      // Create unique meals list (prioritize existing meals over defaults)
+      const uniqueMeals = [...convertedMeals];
+      defaultMeals.forEach(defaultMeal => {
+        if (!uniqueMeals.some(meal => meal.name.toLowerCase() === defaultMeal.name.toLowerCase() && meal.mealType === defaultMeal.mealType)) {
+          uniqueMeals.push(defaultMeal);
+        }
+      });
+
+      setSavedMeals(uniqueMeals);
+    } catch (error) {
+      console.error('Failed to fetch saved meals:', error);
+      setSavedMeals([]);
+    } finally {
+      setIsLoadingMeals(false);
+    }
+  };
 
   useEffect(() => {
     if (editingMeal) {
       setFormData({
         name: editingMeal.name,
-        description: editingMeal.description || '',
         category: editingMeal.category,
         time: editingMeal.time || '',
-        calories: editingMeal.calories?.toString() || '',
-        prepTime: editingMeal.prepTime?.toString() || ''
+        selectedMealId: ''
       });
     } else {
       setFormData({
         name: '',
-        description: '',
         category: selectedCategory || 'breakfast',
         time: '',
-        calories: '',
-        prepTime: ''
+        selectedMealId: ''
       });
     }
   }, [editingMeal, selectedCategory]);
+
+  const handleMealSelection = (mealId: string) => {
+    const selectedMeal = savedMeals.find(meal => meal.id === mealId);
+    if (selectedMeal) {
+      setFormData({
+        ...formData,
+        name: selectedMeal.name,
+        selectedMealId: mealId
+      });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     const mealData: Omit<Meal, 'id'> = {
       name: formData.name,
-      description: formData.description || undefined,
       category: formData.category,
-      time: formData.time || undefined,
-      calories: formData.calories ? parseInt(formData.calories) : undefined,
-      prepTime: formData.prepTime ? parseInt(formData.prepTime) : undefined
+      time: formData.time || undefined
     };
 
     onSave(mealData);
@@ -68,6 +129,11 @@ export default function MealFormModal({
   };
 
   if (!isOpen) return null;
+
+  // Filter meals by current category for better UX
+  const filteredMeals = savedMeals.filter(meal => 
+    meal.mealType === formData.category
+  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -90,21 +156,6 @@ export default function MealFormModal({
 
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Meal Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter meal name"
-            />
-          </div>
-
-          <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
               Category *
             </label>
@@ -112,7 +163,7 @@ export default function MealFormModal({
               id="category"
               required
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value as any, selectedMealId: '', name: '' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="breakfast">Breakfast</option>
@@ -122,9 +173,57 @@ export default function MealFormModal({
             </select>
           </div>
 
+          {!isLoadingMeals && filteredMeals.length > 0 && (
+            <div>
+              <label htmlFor="savedMeal" className="block text-sm font-medium text-gray-700 mb-1">
+                Select from saved meals
+              </label>
+              <select
+                id="savedMeal"
+                value={formData.selectedMealId}
+                onChange={(e) => handleMealSelection(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Choose a saved meal...</option>
+                {filteredMeals.map((meal) => (
+                  <option key={meal.id} value={meal.id}>
+                    {meal.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Or create a new meal by entering a name below
+              </p>
+            </div>
+          )}
+
+          {isLoadingMeals && (
+            <div className="text-center py-2">
+              <div className="inline-flex items-center gap-2 text-gray-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                Loading saved meals...
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Meal Name *
+            </label>
+            <input
+              type="text"
+              id="name"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value, selectedMealId: '' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter meal name or select from saved meals above"
+            />
+          </div>
+
           <div>
             <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
-              Time
+              Time (optional)
             </label>
             <input
               type="time"
@@ -135,49 +234,15 @@ export default function MealFormModal({
             />
           </div>
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              id="description"
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="Enter meal description"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="calories" className="block text-sm font-medium text-gray-700 mb-1">
-                Calories
-              </label>
-              <input
-                type="number"
-                id="calories"
-                min="0"
-                value={formData.calories}
-                onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="0"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="prepTime" className="block text-sm font-medium text-gray-700 mb-1">
-                Prep Time (min)
-              </label>
-              <input
-                type="number"
-                id="prepTime"
-                min="0"
-                value={formData.prepTime}
-                onChange={(e) => setFormData({ ...formData, prepTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="0"
-              />
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+            <div className="flex items-start">
+              <svg className="w-4 h-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="text-sm text-blue-700">
+                <p className="font-medium">Quick planning mode</p>
+                <p>Add detailed nutritional info and instructions in the Meal Management section later.</p>
+              </div>
             </div>
           </div>
 

@@ -153,6 +153,7 @@ export default function DailyView({
         editingMeal={editingMeal}
         selectedDate={currentDate}
         selectedCategory={selectedCategory}
+        existingMeals={meals}
       />
     </div>
   );

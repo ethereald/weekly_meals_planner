@@ -187,6 +187,7 @@ export default function WeeklyView({
         editingMeal={editingMeal}
         selectedDate={selectedDate || currentDate}
         selectedCategory={selectedCategory}
+        existingMeals={meals}
       />
     </div>
   );

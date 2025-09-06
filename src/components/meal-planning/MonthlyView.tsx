@@ -257,6 +257,7 @@ export default function MonthlyView({
         onSave={handleSaveMeal}
         editingMeal={null}
         selectedDate={selectedDate || currentDate}
+        existingMeals={meals}
       />
     </div>
   );

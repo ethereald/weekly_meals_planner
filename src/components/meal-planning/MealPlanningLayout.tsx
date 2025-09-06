@@ -110,17 +110,36 @@ export default function MealPlanningLayout({
 
               {/* View Toggle */}
               <div className="flex bg-gray-100 rounded-lg p-1">
-                {(['daily', 'weekly', 'monthly'] as const).map((viewOption) => (
+                {([
+                  { 
+                    value: 'daily', 
+                    label: 'Daily', 
+                    icon: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707' 
+                  },
+                  { 
+                    value: 'weekly', 
+                    label: 'Weekly', 
+                    icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' 
+                  },
+                  { 
+                    value: 'monthly', 
+                    label: 'Monthly', 
+                    icon: 'M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' 
+                  }
+                ] as const).map((viewOption) => (
                   <button
-                    key={viewOption}
-                    onClick={() => onViewChange(viewOption)}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors capitalize ${
-                      view === viewOption
+                    key={viewOption.value}
+                    onClick={() => onViewChange(viewOption.value)}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      view === viewOption.value
                         ? 'bg-white text-gray-900 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    {viewOption}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={viewOption.icon} />
+                    </svg>
+                    {viewOption.label}
                   </button>
                 ))}
               </div>

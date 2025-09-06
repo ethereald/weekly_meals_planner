@@ -15,7 +15,6 @@ export default function MealPlanningPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [meals, setMeals] = useState<Meal[]>([]);
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +22,9 @@ export default function MealPlanningPage() {
   
   // Check if debug mode is enabled via URL parameter
   const isDebugMode = searchParams.get('debug') === 'true';
+  
+  // Get current view from URL parameter, default to 'daily'
+  const view = (searchParams.get('view') as 'daily' | 'weekly' | 'monthly') || 'daily';
 
   // Load user and initialize data
   useEffect(() => {
@@ -206,13 +208,22 @@ export default function MealPlanningPage() {
   };
 
   const handleViewChange = (newView: 'daily' | 'weekly' | 'monthly') => {
-    setView(newView);
-    // The useEffect will automatically reload meals when view changes
+    const params = new URLSearchParams(searchParams);
+    params.set('view', newView);
+    if (isDebugMode) {
+      params.set('debug', 'true');
+    }
+    router.push(`/meal-planning?${params.toString()}`);
   };
 
   const handleDateSelect = (date: Date) => {
     setCurrentDate(date);
-    setView('daily');
+    const params = new URLSearchParams(searchParams);
+    params.set('view', 'daily');
+    if (isDebugMode) {
+      params.set('debug', 'true');
+    }
+    router.push(`/meal-planning?${params.toString()}`);
   };
 
   if (loading) {

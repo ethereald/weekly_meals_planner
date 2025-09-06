@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { authApi } from '../../lib/auth-client';
 import MealPlanningLayout from '../../components/meal-planning/MealPlanningLayout';
 import DailyView from '../../components/meal-planning/DailyView';
 import WeeklyView from '../../components/meal-planning/WeeklyView';
@@ -14,65 +15,115 @@ export default function MealPlanningPage() {
   const [view, setView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null);
 
-  // Sample meals for demonstration
+  // Load user and sample meals
   useEffect(() => {
-    const sampleMeals: Meal[] = [
-      {
-        id: '1',
-        name: 'Avocado Toast',
-        description: 'Whole grain bread with mashed avocado, cherry tomatoes, and feta cheese',
-        category: 'breakfast',
-        time: '08:00',
-        calories: 320,
-        prepTime: 10
-      },
-      {
-        id: '2',
-        name: 'Greek Salad',
-        description: 'Fresh vegetables with olives, feta cheese, and olive oil dressing',
-        category: 'lunch',
-        time: '12:30',
-        calories: 280,
-        prepTime: 15
-      },
-      {
-        id: '3',
-        name: 'Grilled Salmon',
-        description: 'Atlantic salmon with roasted vegetables and quinoa',
-        category: 'dinner',
-        time: '19:00',
-        calories: 450,
-        prepTime: 25
-      },
-      {
-        id: '4',
-        name: 'Mixed Nuts',
-        description: 'Almonds, walnuts, and cashews',
-        category: 'snack',
-        time: '15:30',
-        calories: 180,
-        prepTime: 0
-      },
-      {
-        id: '5',
-        name: 'Overnight Oats',
-        description: 'Oats with almond milk, chia seeds, and berries',
-        category: 'breakfast',
-        time: '07:30',
-        calories: 290,
-        prepTime: 5
+    const initializeData = async () => {
+      try {
+        // Get current user
+        const profile = await authApi.getProfile();
+        const user = { id: profile.user.id, username: profile.user.username };
+        setCurrentUser(user);
+
+        // Sample meals with user information
+        const sampleMeals: Meal[] = [
+          {
+            id: '1',
+            name: 'Avocado Toast',
+            description: 'Whole grain bread with mashed avocado, cherry tomatoes, and feta cheese',
+            category: 'breakfast',
+            time: '08:00',
+            calories: 320,
+            prepTime: 10,
+            addedBy: {
+              userId: user.id,
+              username: user.username,
+              addedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Yesterday
+            }
+          },
+          {
+            id: '2',
+            name: 'Greek Salad',
+            description: 'Fresh vegetables with olives, feta cheese, and olive oil dressing',
+            category: 'lunch',
+            time: '12:30',
+            calories: 280,
+            prepTime: 15,
+            addedBy: {
+              userId: user.id,
+              username: user.username,
+              addedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
+            }
+          },
+          {
+            id: '3',
+            name: 'Grilled Salmon',
+            description: 'Atlantic salmon with roasted vegetables and quinoa',
+            category: 'dinner',
+            time: '19:00',
+            calories: 450,
+            prepTime: 25,
+            addedBy: {
+              userId: user.id,
+              username: user.username,
+              addedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
+            }
+          },
+          {
+            id: '4',
+            name: 'Mixed Nuts',
+            description: 'Almonds, walnuts, and cashews',
+            category: 'snack',
+            time: '15:30',
+            calories: 180,
+            prepTime: 0,
+            addedBy: {
+              userId: user.id,
+              username: user.username,
+              addedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() // 12 hours ago
+            }
+          },
+          {
+            id: '5',
+            name: 'Overnight Oats',
+            description: 'Oats with almond milk, chia seeds, and berries',
+            category: 'breakfast',
+            time: '07:30',
+            calories: 290,
+            prepTime: 5,
+            addedBy: {
+              userId: user.id,
+              username: user.username,
+              addedAt: new Date().toISOString() // Now
+            }
+          }
+        ];
+        
+        setMeals(sampleMeals);
+      } catch (error) {
+        console.error('Failed to load user data:', error);
+        // Redirect to login if auth fails
+        router.push('/auth');
+      } finally {
+        setLoading(false);
       }
-    ];
-    
-    setMeals(sampleMeals);
-    setLoading(false);
-  }, []);
+    };
+
+    initializeData();
+  }, [router]);
 
   const handleAddMeal = (mealData: Omit<Meal, 'id'>, date?: Date) => {
+    if (!currentUser) return;
+    
     const newMeal: Meal = {
       ...mealData,
-      id: Date.now().toString()
+      id: Date.now().toString(),
+      addedBy: {
+        userId: currentUser.id,
+        username: currentUser.username,
+        addedAt: new Date().toISOString()
+      }
     };
     setMeals(prev => [...prev, newMeal]);
   };

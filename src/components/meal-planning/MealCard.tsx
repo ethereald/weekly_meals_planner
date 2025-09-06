@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatDistanceToNow, format } from 'date-fns';
 
 export interface Meal {
   id: string;
@@ -10,6 +11,11 @@ export interface Meal {
   time?: string;
   calories?: number;
   prepTime?: number;
+  addedBy?: {
+    userId: string;
+    username: string;
+    addedAt: string; // ISO date string
+  };
 }
 
 interface MealCardProps {
@@ -78,6 +84,21 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {meal.prepTime}m
+                </span>
+              )}
+            </div>
+          )}
+          
+          {/* User Information */}
+          {meal.addedBy && (
+            <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span>Added by {meal.addedBy.username}</span>
+              {!compact && (
+                <span title={format(new Date(meal.addedBy.addedAt), 'PPp')}>
+                  • {formatDistanceToNow(new Date(meal.addedBy.addedAt), { addSuffix: true })}
                 </span>
               )}
             </div>

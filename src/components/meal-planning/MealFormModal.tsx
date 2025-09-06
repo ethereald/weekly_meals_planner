@@ -91,16 +91,16 @@ export default function MealFormModal({
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start sm:items-center sm:justify-center p-2 sm:p-4">
+      <div className="bg-white w-full max-w-[calc(100vw-1rem)] h-[calc(100dvh-1rem)] sm:h-auto sm:max-w-md sm:rounded-lg shadow-xl flex flex-col sm:max-h-[90vh] overflow-hidden">
+        <div className="px-3 py-3 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-gray-900 truncate flex-1 min-w-0">
               {editingMeal ? 'Edit Meal' : 'Add New Meal'}
             </h2>
             <button
               onClick={onClose}
-              className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -109,114 +109,98 @@ export default function MealFormModal({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-              Category *
-            </label>
-            <select
-              id="category"
-              required
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value as 'breakfast' | 'lunch' | 'dinner' | 'snack', selectedMealId: '', name: '' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="breakfast">Breakfast</option>
-              <option value="lunch">Lunch</option>
-              <option value="dinner">Dinner</option>
-              <option value="snack">Snack</option>
-            </select>
-          </div>
-
-          {!isLoadingMeals && filteredMeals.length > 0 && (
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <form onSubmit={handleSubmit} className="px-3 py-3 space-y-3 min-h-0">
             <div>
-              <label htmlFor="savedMeal" className="block text-sm font-medium text-gray-700 mb-1">
-                Select from saved meals
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                Category *
               </label>
               <select
-                id="savedMeal"
-                value={formData.selectedMealId}
-                onChange={(e) => handleMealSelection(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                id="category"
+                required
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value as 'breakfast' | 'lunch' | 'dinner' | 'snack', selectedMealId: '', name: '' })}
+                className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
               >
-                <option value="">Choose a saved meal...</option>
-                {filteredMeals.map((meal) => (
-                  <option key={meal.id} value={meal.id}>
-                    {meal.name}
-                  </option>
-                ))}
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Or create a new meal by entering a name below
-              </p>
             </div>
-          )}
 
-          {isLoadingMeals && (
-            <div className="text-center py-2">
-              <div className="inline-flex items-center gap-2 text-gray-500">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                Loading saved meals...
+            {!isLoadingMeals && filteredMeals.length > 0 && (
+              <div>
+                <label htmlFor="savedMeal" className="block text-sm font-medium text-gray-700 mb-1">
+                  Select from saved meals
+                </label>
+                <select
+                  id="savedMeal"
+                  value={formData.selectedMealId}
+                  onChange={(e) => handleMealSelection(e.target.value)}
+                  className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
+                >
+                  <option value="">Choose a saved meal...</option>
+                  {filteredMeals.map((meal) => (
+                    <option key={meal.id} value={meal.id}>
+                      {meal.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+            )}
+
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                Meal Name *
+              </label>
+              <input
+                type="text"
+                id="name"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value, selectedMealId: '' })}
+                className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
+                placeholder="Enter meal name"
+              />
             </div>
-          )}
 
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Meal Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value, selectedMealId: '' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter meal name or select from saved meals above"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
-              Time (optional)
-            </label>
-            <input
-              type="time"
-              id="time"
-              value={formData.time}
-              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-            <div className="flex items-start">
-              <svg className="w-4 h-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div className="text-sm text-blue-700">
-                <p className="font-medium">Quick planning mode</p>
-                <p>Add detailed nutritional info and instructions in the Meal Management section later.</p>
-              </div>
+            <div>
+              <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
+                Time (optional)
+              </label>
+              <input
+                type="time"
+                id="time"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
+              />
             </div>
-          </div>
 
-          <div className="flex gap-3 pt-4">
+            {/* Add some bottom padding to ensure content doesn't get hidden behind buttons on mobile keyboards */}
+            <div className="h-16 sm:h-0"></div>
+          </form>
+        </div>
+
+        <div className="px-3 py-2 border-t border-gray-200 flex-shrink-0 bg-white">
+          <div className="flex gap-2 min-w-0">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors"
+              className="flex-1 px-2 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors min-w-0 box-border"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              onClick={handleSubmit}
+              className="flex-1 px-2 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors min-w-0 box-border"
             >
-              {editingMeal ? 'Update' : 'Add'} Meal
+              {editingMeal ? 'Update' : 'Add'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

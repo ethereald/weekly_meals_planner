@@ -165,24 +165,24 @@ export default function WeeklyView({
       )}
       
       {/* Weekly Summary */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
           Week of {format(weekStart, 'MMMM d, yyyy')}
         </h2>
         
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {weekDays.map((day) => {
             const isToday = isSameDay(day, new Date());
             const totalCalories = getDayTotalCalories(day);
             
             return (
-              <div key={day.toISOString()} className={`text-center p-3 rounded-lg ${
+              <div key={day.toISOString()} className={`text-center p-2 sm:p-3 rounded-lg ${
                 isToday ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
               }`}>
-                <div className={`text-sm font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
+                <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
                   {format(day, 'EEE')}
                 </div>
-                <div className={`text-lg font-semibold ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
+                <div className={`text-base sm:text-lg font-semibold ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
                   {format(day, 'd')}
                 </div>
                 <div className={`text-xs ${isToday ? 'text-blue-700' : 'text-gray-600'}`}>
@@ -194,79 +194,85 @@ export default function WeeklyView({
         </div>
       </div>
 
-      {/* Weekly Grid */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="grid grid-cols-8 divide-x divide-gray-200">
-          {/* Header */}
-          <div className="bg-gray-50 p-4 min-w-0">
-            <div className="text-sm font-medium text-gray-900">Meals</div>
-          </div>
-          {weekDays.map((day) => {
-            const isToday = isSameDay(day, new Date());
-            return (
-              <div key={day.toISOString()} className={`p-4 min-w-0 ${isToday ? 'bg-blue-50' : 'bg-gray-50'}`}>
-                <div className={`text-sm font-medium ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
-                  {format(day, 'EEE')}
-                </div>
-                <div className={`text-lg font-semibold ${isToday ? 'text-blue-900' : 'text-gray-900'}`}>
-                  {format(day, 'd')}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Meal Categories */}
-          {mealCategories.map((category) => (
-            <div key={category.key} className="contents">
-              {/* Category Label */}
-              <div className={`p-4 bg-gray-50 border-l-4 ${category.color} flex items-center min-w-0`}>
-                <div className="text-sm font-medium text-gray-900 capitalize">
-                  {category.label}
-                </div>
-              </div>
-
-              {/* Day Cells */}
-              {weekDays.map((day) => {
-                const dayMeals = getMealsForDateAndCategory(day, category.key);
-                const isToday = isSameDay(day, new Date());
-                
-                return (
-                  <div key={`${day.toISOString()}-${category.key}`} className={`p-2 min-h-[120px] min-w-0 ${
-                    isToday ? 'bg-blue-25' : ''
-                  }`}>
-                    <div className="space-y-2">
-                      {dayMeals.slice(0, 2).map((meal) => (
-                        <MealCard
-                          key={meal.id}
-                          meal={meal}
-                          onEdit={handleEditMeal}
-                          onDelete={onDeleteMeal}
-                          compact
-                        />
-                      ))}
-                      
-                      {dayMeals.length > 2 && (
-                        <div className="text-xs text-gray-500 text-center py-1">
-                          +{dayMeals.length - 2} more
-                        </div>
-                      )}
-                      
-                      <button
-                        onClick={() => handleAddMeal(day, category.key)}
-                        className="w-full p-2 border-2 border-dashed border-gray-300 rounded-md text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors text-xs"
-                      >
-                        <svg className="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add
-                      </button>
-                    </div>
+      {/* Horizontal Days Layout */}
+      <div className="space-y-4">
+        {weekDays.map((day) => {
+          const isToday = isSameDay(day, new Date());
+          const totalCalories = getDayTotalCalories(day);
+          
+          return (
+            <div key={day.toISOString()} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              {/* Day Header */}
+              <div className={`px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 ${
+                isToday ? 'bg-blue-50' : 'bg-gray-50'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <h3 className={`text-base sm:text-lg font-semibold ${
+                      isToday ? 'text-blue-900' : 'text-gray-900'
+                    }`}>
+                      {format(day, 'EEEE, MMMM d')}
+                    </h3>
+                    {isToday && (
+                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                        Today
+                      </span>
+                    )}
                   </div>
-                );
-              })}
+                  <div className={`text-sm ${isToday ? 'text-blue-700' : 'text-gray-600'}`}>
+                    {totalCalories} calories
+                  </div>
+                </div>
+              </div>
+
+              {/* Meal Categories for this day */}
+              <div className="p-3 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {mealCategories.map((category) => {
+                    const dayMeals = getMealsForDateAndCategory(day, category.key);
+                    const categoryCalories = dayMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
+                    
+                    return (
+                      <div key={category.key} className={`border-l-4 ${category.color} bg-gray-50 rounded-r-lg`}>
+                        {/* Category Header */}
+                        <div className="px-3 py-2 border-b border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-medium text-gray-900">{category.label}</h4>
+                            <span className="text-xs text-gray-600">{categoryCalories} cal</span>
+                          </div>
+                        </div>
+                        
+                        {/* Meals */}
+                        <div className="p-3 space-y-2 min-h-[100px]">
+                          {dayMeals.map((meal) => (
+                            <MealCard
+                              key={meal.id}
+                              meal={meal}
+                              onEdit={handleEditMeal}
+                              onDelete={onDeleteMeal}
+                              compact
+                            />
+                          ))}
+                          
+                          {/* Add Meal Button */}
+                          <button
+                            onClick={() => handleAddMeal(day, category.key)}
+                            className="w-full p-2 border-2 border-dashed border-gray-300 rounded-md text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors text-xs"
+                          >
+                            <svg className="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add {category.label}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {/* Meal Form Modal */}

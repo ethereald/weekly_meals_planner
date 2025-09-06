@@ -17,6 +17,7 @@ export const userSettings = sqliteTable('user_settings', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   dietaryRestrictions: text('dietary_restrictions'), // JSON string for dietary restrictions
   preferredMealTimes: text('preferred_meal_times'), // JSON string for meal time preferences
+  enabledMealCategories: text('enabled_meal_categories').default('["breakfast","lunch","dinner","snack"]'), // JSON array of enabled meal categories
   weeklyMealGoal: integer('weekly_meal_goal').default(21), // 3 meals × 7 days
   servingSize: integer('serving_size').default(2), // Default serving size
   budgetRange: real('budget_range'), // Weekly budget

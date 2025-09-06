@@ -18,6 +18,17 @@ export interface ProfileResponse {
   settings: Record<string, unknown> | null;
 }
 
+export interface UserSettings {
+  enabledMealCategories: string[];
+  weeklyMealGoal?: number;
+  servingSize?: number;
+  budgetRange?: number;
+  shoppingDay?: string;
+  notificationsEnabled?: boolean;
+  dietaryRestrictions?: string;
+  preferredMealTimes?: string;
+}
+
 // API base URL
 const API_BASE = '/api/auth';
 
@@ -114,5 +125,19 @@ export const authApi = {
     } catch {
       return false;
     }
+  },
+
+  // Get user settings
+  getUserSettings: async (): Promise<UserSettings> => {
+    const response = await fetch('/api/user/settings', {
+      credentials: 'include',
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to get user settings');
+    }
+
+    return data;
   },
 };

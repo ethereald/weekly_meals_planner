@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import MealCard, { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
 import { SavedMeal } from '../../lib/api/meals';
+import { authApi, UserSettings } from '../../lib/auth-client';
 
 interface WeeklyViewProps {
   currentDate: Date;
@@ -29,18 +30,50 @@ export default function WeeklyView({
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | undefined>();
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+
+  // Load user settings on component mount
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        const settings = await authApi.getUserSettings();
+        setUserSettings(settings);
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+        // Fallback to default settings
+        setUserSettings({
+          enabledMealCategories: ['breakfast', 'lunch', 'dinner', 'snack']
+        });
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+
+    loadUserSettings();
+  }, []);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const mealCategories = [
+  const allMealCategories = [
     { key: 'breakfast', label: 'Breakfast', color: 'border-l-yellow-400' },
     { key: 'lunch', label: 'Lunch', color: 'border-l-green-400' },
     { key: 'dinner', label: 'Dinner', color: 'border-l-blue-400' },
     { key: 'snack', label: 'Snacks', color: 'border-l-purple-400' }
   ] as const;
 
+  // Filter meal categories based on user settings
+  const mealCategories = allMealCategories.filter(category => 
+    userSettings?.enabledMealCategories.includes(category.key)
+  );
+
   const getMealsForDateAndCategory = (date: Date, category: string) => {
+    // Check if category is enabled
+    if (!userSettings?.enabledMealCategories.includes(category)) {
+      return [];
+    }
+    
     return meals.filter(meal => {
       const mealCategory = meal.meal?.mealType || meal.category;
       // Filter by both date and category
@@ -84,6 +117,24 @@ export default function WeeklyView({
     });
     return total;
   };
+
+  // Show loading state while settings are being fetched
+  if (settingsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded mb-4 w-1/4"></div>
+            <div className="grid grid-cols-8 gap-4">
+              {Array.from({ length: 32 }).map((_, i) => (
+                <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

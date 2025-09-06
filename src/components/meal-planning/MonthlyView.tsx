@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   format, 
   startOfMonth, 
@@ -15,6 +15,7 @@ import {
 import { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
 import { SavedMeal } from '../../lib/api/meals';
+import { authApi, UserSettings } from '../../lib/auth-client';
 
 interface MonthlyViewProps {
   currentDate: Date;
@@ -39,6 +40,28 @@ export default function MonthlyView({
 }: MonthlyViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+
+  // Load user settings on component mount
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        const settings = await authApi.getUserSettings();
+        setUserSettings(settings);
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+        // Fallback to default settings
+        setUserSettings({
+          enabledMealCategories: ['breakfast', 'lunch', 'dinner', 'snack']
+        });
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+
+    loadUserSettings();
+  }, []);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -52,9 +75,31 @@ export default function MonthlyView({
     day = addDays(day, 1);
   }
 
+  // Define meal category colors and labels
+  const mealCategoryConfig = {
+    breakfast: { color: 'bg-yellow-200', textColor: 'text-yellow-800', label: 'Breakfast' },
+    lunch: { color: 'bg-green-200', textColor: 'text-green-800', label: 'Lunch' },
+    dinner: { color: 'bg-blue-200', textColor: 'text-blue-800', label: 'Dinner' },
+    snack: { color: 'bg-purple-200', textColor: 'text-purple-800', label: 'Snacks' }
+  };
+
+  // Get enabled meal categories with their configs
+  const enabledCategories = (userSettings?.enabledMealCategories || []).map(key => ({
+    key,
+    ...mealCategoryConfig[key as keyof typeof mealCategoryConfig]
+  }));
+
   const getMealsForDate = (date: Date) => {
-    // Filter meals by the specific date
+    // Filter meals by the specific date and enabled categories
     return meals.filter(meal => {
+      // Check if meal category is enabled
+      const mealCategory = meal.meal?.mealType || meal.category;
+      const isCategoryEnabled = userSettings?.enabledMealCategories.includes(mealCategory);
+      
+      if (!isCategoryEnabled) {
+        return false;
+      }
+      
       if (meal.plannedDate) {
         // Fix date parsing - create date in local timezone
         const [year, month, day] = meal.plannedDate.split('-').map(Number);
@@ -92,6 +137,24 @@ export default function MonthlyView({
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // Show loading state while settings are being fetched
+  if (settingsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded mb-4 w-1/3"></div>
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: 35 }).map((_, i) => (
+                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Debug Info - Only show when debug mode is enabled */}
@@ -109,7 +172,7 @@ export default function MonthlyView({
             <strong>Total meals in month:</strong> {calendarDays.filter(day => isSameMonth(day, currentDate)).reduce((total, day) => total + getDayMealCount(day), 0)}
             <br />
             <strong>Meals by category:</strong>
-            {['breakfast', 'lunch', 'dinner', 'snack'].map(category => {
+            {(userSettings?.enabledMealCategories || []).map(category => {
               const categoryMeals = meals.filter(meal => meal.category === category);
               return (
                 <div key={category}>
@@ -225,21 +288,13 @@ export default function MonthlyView({
                     {/* Meal indicators */}
                     <div className="space-y-1">
                       {dayMeals.slice(0, 3).map((meal, index) => {
-                        const colors = {
-                          breakfast: 'bg-yellow-200',
-                          lunch: 'bg-green-200',
-                          dinner: 'bg-blue-200',
-                          snack: 'bg-purple-200'
-                        };
+                        const categoryConfig = mealCategoryConfig[meal.category as keyof typeof mealCategoryConfig];
                         
                         return (
                           <div
                             key={index}
-                            className={`text-xs p-1 rounded truncate ${colors[meal.category]} ${
-                              meal.category === 'breakfast' ? 'text-yellow-800' :
-                              meal.category === 'lunch' ? 'text-green-800' :
-                              meal.category === 'dinner' ? 'text-blue-800' :
-                              'text-purple-800'
+                            className={`text-xs p-1 rounded truncate ${categoryConfig?.color || 'bg-gray-200'} ${
+                              categoryConfig?.textColor || 'text-gray-800'
                             }`}
                           >
                             {meal.name}
@@ -270,22 +325,12 @@ export default function MonthlyView({
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <h3 className="text-sm font-medium text-gray-900 mb-3">Meal Types</h3>
         <div className="flex flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-200 rounded"></div>
-            <span className="text-xs text-gray-600">Breakfast</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-200 rounded"></div>
-            <span className="text-xs text-gray-600">Lunch</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-200 rounded"></div>
-            <span className="text-xs text-gray-600">Dinner</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-purple-200 rounded"></div>
-            <span className="text-xs text-gray-600">Snacks</span>
-          </div>
+          {enabledCategories.map(category => (
+            <div key={category.key} className="flex items-center gap-2">
+              <div className={`w-3 h-3 ${category.color} rounded`}></div>
+              <span className="text-xs text-gray-600">{category.label}</span>
+            </div>
+          ))}
         </div>
       </div>
 

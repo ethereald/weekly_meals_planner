@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, isSameDay } from 'date-fns';
 import MealCard, { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
 import { SavedMeal } from '../../lib/api/meals';
+import { authApi, UserSettings } from '../../lib/auth-client';
 
 interface DailyViewProps {
   currentDate: Date;
@@ -28,13 +29,40 @@ export default function DailyView({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | undefined>();
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
 
-  const mealCategories = [
+  // Load user settings on component mount
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        const settings = await authApi.getUserSettings();
+        setUserSettings(settings);
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+        // Fallback to default settings
+        setUserSettings({
+          enabledMealCategories: ['breakfast', 'lunch', 'dinner', 'snack']
+        });
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+
+    loadUserSettings();
+  }, []);
+
+  const allMealCategories = [
     { key: 'breakfast', label: 'Breakfast', icon: '🌅' },
     { key: 'lunch', label: 'Lunch', icon: '☀️' },
     { key: 'dinner', label: 'Dinner', icon: '🌙' },
     { key: 'snack', label: 'Snacks', icon: '🍿' }
   ] as const;
+
+  // Filter meal categories based on user settings
+  const mealCategories = allMealCategories.filter(category => 
+    userSettings?.enabledMealCategories.includes(category.key)
+  );
 
   // Test function to debug the filtering issue
   const testFiltering = () => {
@@ -68,6 +96,12 @@ export default function DailyView({
   const getMealsForCategory = (category: string) => {
     console.log(`🔍 getMealsForCategory called for "${category}"`);
     console.log('📊 Total meals to filter:', meals.length);
+    
+    // Check if category is enabled
+    if (!userSettings?.enabledMealCategories.includes(category)) {
+      console.log(`❌ Category "${category}" is not enabled for this user`);
+      return [];
+    }
     
     const filteredMeals = meals.filter(meal => {
       const mealCategory = meal.meal?.mealType || meal.category;
@@ -135,6 +169,28 @@ export default function DailyView({
   const getTotalCalories = () => {
     return meals.reduce((total, meal) => total + (meal.calories || 0), 0);
   };
+
+  // Show loading state while settings are being fetched
+  if (settingsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded mb-4 w-1/3"></div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-3 bg-gray-50 rounded-lg">
+                  <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -40,6 +40,8 @@ export default function AdminPanel() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [editingMealCategories, setEditingMealCategories] = useState<User | null>(null);
+  const [mealCategories, setMealCategories] = useState<string[]>(['breakfast', 'lunch', 'dinner', 'snack']);
 
   useEffect(() => {
     checkAuthAndFetchUsers();
@@ -190,6 +192,57 @@ export default function AdminPanel() {
       password: '', // Don't populate password for security
       role: user.role
     });
+  };
+
+  const startEditMealCategories = async (user: User) => {
+    setEditingMealCategories(user);
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}/meal-categories`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMealCategories(data.enabledMealCategories || ['breakfast', 'lunch', 'dinner', 'snack']);
+      }
+    } catch (error) {
+      console.error('Failed to fetch meal categories:', error);
+      setMealCategories(['breakfast', 'lunch', 'dinner', 'snack']);
+    }
+  };
+
+  const handleMealCategoryToggle = (category: string) => {
+    setMealCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  const saveMealCategories = async () => {
+    if (!editingMealCategories) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${editingMealCategories.id}/meal-categories`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          enabledMealCategories: mealCategories
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update meal categories');
+      }
+
+      setSuccess('Meal categories updated successfully');
+      setEditingMealCategories(null);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to update meal categories');
+    }
   };
 
   if (isLoading) {
@@ -351,6 +404,12 @@ export default function AdminPanel() {
                         Edit
                       </button>
                       <button
+                        onClick={() => startEditMealCategories(user)}
+                        className="text-green-600 hover:text-green-900 mr-4"
+                      >
+                        Meal Categories
+                      </button>
+                      <button
                         onClick={() => handleDeleteUser(user.id, user.username)}
                         className="text-red-600 hover:text-red-900"
                       >
@@ -426,6 +485,60 @@ export default function AdminPanel() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Meal Categories Modal */}
+        {editingMealCategories && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">
+                    Meal Categories for {editingMealCategories.username}
+                  </h3>
+                  <button
+                    onClick={() => setEditingMealCategories(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <div className="space-y-3 mb-6">
+                  {['breakfast', 'lunch', 'dinner', 'snack'].map((category) => (
+                    <label key={category} className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={mealCategories.includes(category)}
+                        onChange={() => handleMealCategoryToggle(category)}
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm font-medium text-gray-700 capitalize">
+                        {category}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingMealCategories(null)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveMealCategories}
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           </div>

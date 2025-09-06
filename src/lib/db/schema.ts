@@ -64,6 +64,7 @@ export const userSettings = pgTable('user_settings', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   dietaryRestrictions: text('dietary_restrictions').array(), // Array of dietary restrictions
   preferredMealTimes: text('preferred_meal_times'), // JSON string for meal time preferences
+  enabledMealCategories: text('enabled_meal_categories').default('["breakfast","lunch","dinner","snack"]'), // JSON array of enabled meal categories
   weeklyMealGoal: integer('weekly_meal_goal').default(21), // 3 meals × 7 days
   servingSize: integer('serving_size').default(2), // Default serving size
   budgetRange: decimal('budget_range', { precision: 10, scale: 2 }), // Weekly budget

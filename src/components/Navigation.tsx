@@ -1,55 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { authApi } from '@/lib/auth-client';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading, isAdmin, logout } = useAuth();
 
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
-    try {
-      const isAuth = await authApi.checkAuth();
-      setIsAuthenticated(isAuth);
-      
-      // Check admin status if authenticated
-      if (isAuth) {
-        try {
-          const response = await fetch('/api/admin/users', {
-            credentials: 'include',
-          });
-          setIsAdmin(response.ok);
-        } catch {
-          setIsAdmin(false);
-        }
-      } else {
-        setIsAdmin(false);
-      }
-    } catch {
-      setIsAuthenticated(false);
-      setIsAdmin(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Hide navigation on homepage when not authenticated (login page)
+  if (pathname === '/' && !isAuthenticated && !isLoading) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {
-      await authApi.logout();
-      setIsAuthenticated(false);
-      setIsAdmin(false);
-      router.push('/'); // Redirect to homepage instead of /auth
+      await logout();
+      router.push('/'); // Redirect to homepage
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -80,11 +48,7 @@ export default function Navigation() {
     return pathname === href;
   };
 
-  // Hide navigation on homepage when not authenticated (login page)
-  if (pathname === '/' && !isAuthenticated && !isLoading) {
-    return null;
-  }
-
+  // Always show navigation, but with different content based on auth status
   const navItems = getNavItems();
 
   if (isLoading) {

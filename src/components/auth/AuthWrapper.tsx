@@ -13,8 +13,7 @@ export function AuthWrapper({ onSuccess }: AuthWrapperProps) {
 
   const handleSuccess = () => {
     onSuccess?.();
-    // Refresh the page or redirect as needed
-    window.location.reload();
+    // Don't reload the page, let the parent component handle the state update
   };
 
   return (

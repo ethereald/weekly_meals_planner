@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/auth-client';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface User {
   id: string;

@@ -9,9 +9,18 @@ import MealPlanningLayout from '../../components/meal-planning/MealPlanningLayou
 import DailyView from '../../components/meal-planning/DailyView';
 import WeeklyView from '../../components/meal-planning/WeeklyView';
 import MonthlyView from '../../components/meal-planning/MonthlyView';
+import SuspenseWrapper from '../../components/SuspenseWrapper';
 import { Meal } from '../../components/meal-planning/MealCard';
 
 export default function MealPlanningPage() {
+  return (
+    <SuspenseWrapper>
+      <MealPlanningContent />
+    </SuspenseWrapper>
+  );
+}
+
+function MealPlanningContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());

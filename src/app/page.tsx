@@ -2,28 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from "next/link";
-import { authApi } from '@/lib/auth-client';
+import { useAuth } from '@/contexts/AuthContext';
 import { AuthWrapper } from '@/components/auth/AuthWrapper';
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const isAuth = await authApi.checkAuth();
-        setIsAuthenticated(isAuth);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
+  const { isAuthenticated, isLoading, login } = useAuth();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -56,7 +39,7 @@ export default function Home() {
             </p>
           </div>
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-            <AuthWrapper onSuccess={() => setIsAuthenticated(true)} />
+            <AuthWrapper onSuccess={login} />
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-500">

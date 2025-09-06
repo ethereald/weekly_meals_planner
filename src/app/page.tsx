@@ -1,7 +1,74 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from "next/link";
+import { authApi } from '@/lib/auth-client';
+import { AuthWrapper } from '@/components/auth/AuthWrapper';
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const isAuth = await authApi.checkAuth();
+        setIsAuthenticated(isAuth);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show login form directly
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-lg w-full space-y-8">
+          <div className="text-center">
+            <div className="mx-auto h-16 w-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Weekly Meals Planner
+            </h1>
+            <p className="text-lg text-gray-600 mb-8">
+              Plan your meals, track nutrition, and simplify your cooking routine
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+            <AuthWrapper onSuccess={() => setIsAuthenticated(true)} />
+          </div>
+          <div className="text-center">
+            <p className="text-sm text-gray-500">
+              Start your journey to better meal planning today
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated, show the homepage
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

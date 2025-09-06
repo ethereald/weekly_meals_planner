@@ -6,16 +6,15 @@ import { eq } from 'drizzle-orm';
 
 export async function PUT(request: NextRequest) {
   try {
-    // Get token from Authorization header
-    const authorization = request.headers.get('Authorization');
-    if (!authorization || !authorization.startsWith('Bearer ')) {
+    // Get token from cookie
+    const token = request.cookies.get('auth_token')?.value;
+    if (!token) {
       return NextResponse.json(
         { error: 'Authorization token required' },
         { status: 401 }
       );
     }
 
-    const token = authorization.split(' ')[1];
     const payload = verifyToken(token);
     if (!payload) {
       return NextResponse.json(

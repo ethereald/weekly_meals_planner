@@ -18,16 +18,18 @@ export default function AuthPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (authApi.isAuthenticated()) {
-        try {
+      try {
+        const isAuth = await authApi.checkAuth();
+        if (isAuth) {
           const profile = await authApi.getProfile();
           setUser(profile.user);
           setIsAuthenticated(true);
-        } catch (error) {
-          console.error('Failed to get profile:', error);
-          authApi.logout();
+        } else {
           setIsAuthenticated(false);
         }
+      } catch (error) {
+        console.error('Failed to check auth:', error);
+        setIsAuthenticated(false);
       }
       setLoading(false);
     };
@@ -35,11 +37,17 @@ export default function AuthPage() {
     checkAuth();
   }, []);
 
-  const handleLogout = () => {
-    authApi.logout();
-    setIsAuthenticated(false);
-    setUser(null);
-    setShowChangePassword(false);
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      setIsAuthenticated(false);
+      setUser(null);
+      setShowChangePassword(false);
+      // Redirect to home page, which will redirect to auth page
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   if (loading) {
@@ -116,10 +124,11 @@ export default function AuthPage() {
           <h2 className="text-lg font-semibold mb-4">Authentication Status</h2>
           <div className="space-y-2">
             <p><span className="font-medium">Authenticated:</span> ✅ Yes</p>
-            <p><span className="font-medium">Token:</span> {authApi.getToken()?.substring(0, 20)}...</p>
+            <p><span className="font-medium">Session:</span> Active (HTTP-only cookie)</p>
             <p className="text-sm text-gray-600">
               This page demonstrates that the authentication system is working correctly.
               You can register new users, login, logout, and change passwords.
+              Authentication is now managed via secure HTTP-only cookies.
             </p>
           </div>
         </div>

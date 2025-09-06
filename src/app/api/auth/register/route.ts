@@ -71,7 +71,8 @@ export async function POST(request: NextRequest) {
     // Generate token
     const token = generateToken(newUser.id, newUser.username);
 
-    return NextResponse.json({
+    // Create response with token in HTTP-only cookie
+    const response = NextResponse.json({
       message: 'User registered successfully',
       user: {
         id: newUser.id,
@@ -80,6 +81,17 @@ export async function POST(request: NextRequest) {
       },
       token,
     }, { status: 201 });
+
+    // Set HTTP-only cookie
+    response.cookies.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Registration error:', error);

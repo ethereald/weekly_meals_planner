@@ -7,7 +7,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Weekly Meals Planner
+            Welcome to Weekly Meals Planner
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Plan your meals for the week, track nutrition, and generate shopping lists with our comprehensive meal planning application.
@@ -32,7 +32,7 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Authentication Card */}
+          {/* Profile Management Card */}
           <Link href="/auth" className="group">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group-hover:border-green-300">
               <div className="flex items-center gap-3 mb-4">
@@ -41,10 +41,10 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">User Account</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Profile & Settings</h3>
               </div>
               <p className="text-gray-600 text-sm">
-                Login or register to save your meal plans and access them from anywhere.
+                Manage your account, preferences, and dietary restrictions.
               </p>
             </div>
           </Link>
@@ -112,7 +112,7 @@ export default function Home() {
 
         <div className="text-center">
           <p className="text-sm text-gray-500 mb-6">
-            Get started by exploring the meal planning feature or creating an account.
+            Start planning your meals and take control of your nutrition today.
           </p>
           <Link
             href="/meal-planning"

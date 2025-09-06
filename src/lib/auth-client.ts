@@ -18,9 +18,6 @@ export interface ProfileResponse {
   settings: Record<string, unknown> | null;
 }
 
-// Local storage key for auth token
-const TOKEN_KEY = 'auth_token';
-
 // API base URL
 const API_BASE = '/api/auth';
 
@@ -33,6 +30,7 @@ export const authApi = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include cookies
       body: JSON.stringify({ username, password }),
     });
 
@@ -41,8 +39,6 @@ export const authApi = {
       throw new Error(data.error || 'Registration failed');
     }
 
-    // Store token
-    localStorage.setItem(TOKEN_KEY, data.token);
     return data;
   },
 
@@ -53,6 +49,7 @@ export const authApi = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include cookies
       body: JSON.stringify({ username, password }),
     });
 
@@ -61,24 +58,17 @@ export const authApi = {
       throw new Error(data.error || 'Login failed');
     }
 
-    // Store token
-    localStorage.setItem(TOKEN_KEY, data.token);
     return data;
   },
 
   // Change password
   changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
     const response = await fetch(`${API_BASE}/change-password`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include', // Include cookies
       body: JSON.stringify({ currentPassword, newPassword }),
     });
 
@@ -90,15 +80,8 @@ export const authApi = {
 
   // Get user profile
   getProfile: async (): Promise<ProfileResponse> => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
     const response = await fetch(`${API_BASE}/profile`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      credentials: 'include', // Include cookies
     });
 
     const data = await response.json();
@@ -110,28 +93,26 @@ export const authApi = {
   },
 
   // Logout user
-  logout: (): void => {
-    localStorage.removeItem(TOKEN_KEY);
+  logout: async (): Promise<void> => {
+    const response = await fetch(`${API_BASE}/logout`, {
+      method: 'POST',
+      credentials: 'include', // Include cookies
+    });
+
+    if (!response.ok) {
+      throw new Error('Logout failed');
+    }
   },
 
-  // Check if user is authenticated
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem(TOKEN_KEY);
-  },
-
-  // Get auth token
-  getToken: (): string | null => {
-    return localStorage.getItem(TOKEN_KEY);
+  // Check if user is authenticated (server-side check)
+  checkAuth: async (): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE}/profile`, {
+        credentials: 'include',
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   },
 };
-
-// Auth context helpers for React components
-export function useAuthToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function useIsAuthenticated(): boolean {
-  if (typeof window === 'undefined') return false;
-  return !!localStorage.getItem(TOKEN_KEY);
-}

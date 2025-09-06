@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/auth-client';
 
 interface LoginFormProps {
@@ -9,6 +10,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,6 +24,8 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
     try {
       await authApi.login(username, password);
       onSuccess?.();
+      // Redirect to home page after successful login
+      router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

@@ -13,6 +13,7 @@ interface DailyViewProps {
   onAddMeal: (meal: Omit<Meal, 'id'>, date?: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;
+  isDebugMode?: boolean;
 }
 
 export default function DailyView({
@@ -21,7 +22,8 @@ export default function DailyView({
   existingMeals = [],
   onAddMeal,
   onEditMeal,
-  onDeleteMeal
+  onDeleteMeal,
+  isDebugMode = false
 }: DailyViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
@@ -136,29 +138,31 @@ export default function DailyView({
 
   return (
     <div className="space-y-6">
-      {/* Debug Info */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="text-sm text-yellow-800">
-          <strong>Debug Info:</strong> Total meals: {meals.length}, Current date: {format(currentDate, 'yyyy-MM-dd')}
-          <br />
-          <strong>Meals data:</strong> {JSON.stringify(meals.map(m => ({
-            name: m.name,
-            category: m.category,
-            mealType: m.meal?.mealType,
-            plannedDate: m.plannedDate
-          })), null, 2)}
-          <br />
-          <strong>Dinner meals:</strong> {getMealsForCategory('dinner').length}
-          <br />
-          <strong>Breakfast meals:</strong> {getMealsForCategory('breakfast').length}
-          <br />
-          <strong>Lunch meals:</strong> {getMealsForCategory('lunch').length}
-          <br />
-          <strong>Snack meals:</strong> {getMealsForCategory('snack').length}
-          <br />
-          <strong>Filter test:</strong> {JSON.stringify(testFiltering(), null, 2)}
+      {/* Debug Info - Only show when debug mode is enabled */}
+      {isDebugMode && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="text-sm text-yellow-800">
+            <strong>Debug Info:</strong> Total meals: {meals.length}, Current date: {format(currentDate, 'yyyy-MM-dd')}
+            <br />
+            <strong>Meals data:</strong> {JSON.stringify(meals.map(m => ({
+              name: m.name,
+              category: m.category,
+              mealType: m.meal?.mealType,
+              plannedDate: m.plannedDate
+            })), null, 2)}
+            <br />
+            <strong>Dinner meals:</strong> {getMealsForCategory('dinner').length}
+            <br />
+            <strong>Breakfast meals:</strong> {getMealsForCategory('breakfast').length}
+            <br />
+            <strong>Lunch meals:</strong> {getMealsForCategory('lunch').length}
+            <br />
+            <strong>Snack meals:</strong> {getMealsForCategory('snack').length}
+            <br />
+            <strong>Filter test:</strong> {JSON.stringify(testFiltering(), null, 2)}
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Daily Summary */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

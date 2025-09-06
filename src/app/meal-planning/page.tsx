@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { authApi } from '../../lib/auth-client';
 import { mealsApi, PlannedMeal, SavedMeal } from '../../lib/api/meals';
@@ -13,12 +13,16 @@ import { Meal } from '../../components/meal-planning/MealCard';
 
 export default function MealPlanningPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [meals, setMeals] = useState<Meal[]>([]);
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null);
+  
+  // Check if debug mode is enabled via URL parameter
+  const isDebugMode = searchParams.get('debug') === 'true';
 
   // Load user and initialize data
   useEffect(() => {
@@ -237,6 +241,7 @@ export default function MealPlanningPage() {
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}
+          isDebugMode={isDebugMode}
         />
       )}
       
@@ -248,6 +253,7 @@ export default function MealPlanningPage() {
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}
+          isDebugMode={isDebugMode}
         />
       )}
       
@@ -260,6 +266,7 @@ export default function MealPlanningPage() {
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}
           onDateSelect={handleDateSelect}
+          isDebugMode={isDebugMode}
         />
       )}
     </MealPlanningLayout>

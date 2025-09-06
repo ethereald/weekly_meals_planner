@@ -24,6 +24,7 @@ interface MonthlyViewProps {
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;
   onDateSelect: (date: Date) => void;
+  isDebugMode?: boolean;
 }
 
 export default function MonthlyView({
@@ -33,7 +34,8 @@ export default function MonthlyView({
   onAddMeal,
   onEditMeal,
   onDeleteMeal,
-  onDateSelect
+  onDateSelect,
+  isDebugMode = false
 }: MonthlyViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -92,6 +94,33 @@ export default function MonthlyView({
 
   return (
     <div className="space-y-6">
+      {/* Debug Info - Only show when debug mode is enabled */}
+      {isDebugMode && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="text-sm text-yellow-800">
+            <strong>Monthly Debug Info:</strong> Total meals: {meals.length}, Current month: {format(currentDate, 'MMMM yyyy')}
+            <br />
+            <strong>Month date range:</strong> {format(monthStart, 'yyyy-MM-dd')} to {format(monthEnd, 'yyyy-MM-dd')}
+            <br />
+            <strong>Calendar range:</strong> {format(calendarStart, 'yyyy-MM-dd')} to {format(calendarEnd, 'yyyy-MM-dd')}
+            <br />
+            <strong>Days with meals:</strong> {calendarDays.filter(day => isSameMonth(day, currentDate) && getDayMealCount(day) > 0).length}
+            <br />
+            <strong>Total meals in month:</strong> {calendarDays.filter(day => isSameMonth(day, currentDate)).reduce((total, day) => total + getDayMealCount(day), 0)}
+            <br />
+            <strong>Meals by category:</strong>
+            {['breakfast', 'lunch', 'dinner', 'snack'].map(category => {
+              const categoryMeals = meals.filter(meal => meal.category === category);
+              return (
+                <div key={category}>
+                  <strong>{category}:</strong> {categoryMeals.length} meals
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
       {/* Monthly Summary */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">

@@ -13,6 +13,7 @@ interface WeeklyViewProps {
   onAddMeal: (meal: Omit<Meal, 'id'>, date: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;
+  isDebugMode?: boolean;
 }
 
 export default function WeeklyView({
@@ -21,7 +22,8 @@ export default function WeeklyView({
   existingMeals = [],
   onAddMeal,
   onEditMeal,
-  onDeleteMeal
+  onDeleteMeal,
+  isDebugMode = false
 }: WeeklyViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
@@ -85,6 +87,32 @@ export default function WeeklyView({
 
   return (
     <div className="space-y-6">
+      {/* Debug Info - Only show when debug mode is enabled */}
+      {isDebugMode && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="text-sm text-yellow-800">
+            <strong>Weekly Debug Info:</strong> Total meals: {meals.length}, Current week: {format(weekStart, 'yyyy-MM-dd')} to {format(addDays(weekStart, 6), 'yyyy-MM-dd')}
+            <br />
+            <strong>Meals by day:</strong>
+            {weekDays.map(day => {
+              const dayMeals = meals.filter(meal => {
+                if (meal.plannedDate) {
+                  const [year, month, dayNum] = meal.plannedDate.split('-').map(Number);
+                  const mealDate = new Date(year, month - 1, dayNum);
+                  return isSameDay(mealDate, day);
+                }
+                return false;
+              });
+              return (
+                <div key={day.toISOString()}>
+                  <strong>{format(day, 'EEE d')}:</strong> {dayMeals.length} meals
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
       {/* Weekly Summary */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">

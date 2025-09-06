@@ -33,8 +33,8 @@ export default function MealPlanningPage() {
         const user = { id: profile.user.id, username: profile.user.username };
         setCurrentUser(user);
 
-        // Load saved meals
-        const savedMealsData = await mealsApi.getSavedMeals();
+        // Load saved meals for current user only (for dropdown)
+        const savedMealsData = await mealsApi.getUserSavedMeals();
         setSavedMeals(savedMealsData);
 
         // Load planned meals for current date
@@ -166,8 +166,8 @@ export default function MealPlanningPage() {
           await loadPlannedMeals(currentDate, dateRange);
         }
         
-        // Reload saved meals to update the dropdown
-        const savedMealsData = await mealsApi.getSavedMeals();
+        // Reload saved meals to update the dropdown (user's meals only)
+        const savedMealsData = await mealsApi.getUserSavedMeals();
         setSavedMeals(savedMealsData);
         
         console.log('🔄 Data reloaded after meal addition');

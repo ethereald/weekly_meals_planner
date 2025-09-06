@@ -97,6 +97,26 @@ export const mealsApi = {
     }
   },
 
+  // Get only current user's saved meals (for dropdown)
+  async getUserSavedMeals(): Promise<SavedMeal[]> {
+    try {
+      const response = await fetch('/api/meals?userOnly=true', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user saved meals');
+      }
+      
+      const data = await response.json();
+      return data.meals || [];
+    } catch (error) {
+      console.error('Error fetching user saved meals:', error);
+      return [];
+    }
+  },
+
   // Create a new meal or plan an existing meal
   async createPlannedMeal(mealData: {
     name: string;

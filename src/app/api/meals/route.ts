@@ -6,11 +6,14 @@ import { eq, and, gte, lte } from 'drizzle-orm';
 
 async function getHandler(request: AuthenticatedRequest) {
   try {
+    const userId = request.user!.userId;
+    
     // Get query parameters for filtering
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const userOnly = searchParams.get('userOnly'); // New parameter to get only current user's meals
     
     if (date) {
       // Get planned meals for a specific date from ALL users with creator info
@@ -62,12 +65,22 @@ async function getHandler(request: AuthenticatedRequest) {
 
       return NextResponse.json({ meals: plannedMealsData });
     } else {
-      // Get all meals from ALL users (for saved meals dropdown)
-      const allMeals = await db
-        .select()
-        .from(meals);
+      if (userOnly === 'true') {
+        // Get only current user's meals (for saved meals dropdown)
+        const userMeals = await db
+          .select()
+          .from(meals)
+          .where(eq(meals.userId, userId));
 
-      return NextResponse.json({ meals: allMeals });
+        return NextResponse.json({ meals: userMeals });
+      } else {
+        // Get all meals from ALL users (for general meal library)
+        const allMeals = await db
+          .select()
+          .from(meals);
+
+        return NextResponse.json({ meals: allMeals });
+      }
     }
   } catch (error) {
     console.error('Error fetching meals:', error);

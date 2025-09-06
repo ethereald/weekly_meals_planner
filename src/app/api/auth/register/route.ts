@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users } from '@/lib/db';
+import { db, users, isDatabaseAvailable, initializeDatabase } from '@/lib/db';
 import { hashPassword, validateUsername, validatePassword, generateToken } from '@/lib/auth';
 import { getUserByUsername, createDefaultUserSettings } from '@/lib/db/utils';
 
@@ -25,9 +25,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if database is available
-    if (!db) {
+    if (!isDatabaseAvailable()) {
       return NextResponse.json(
-        { error: 'Database not available' },
+        { error: 'Database not available. Please check your database configuration.' },
+        { status: 503 }
+      );
+    }
+
+    // Initialize database if needed
+    try {
+      await initializeDatabase();
+    } catch (initError) {
+      console.error('Database initialization failed:', initError);
+      return NextResponse.json(
+        { error: 'Database initialization failed' },
         { status: 503 }
       );
     }

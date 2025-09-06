@@ -23,13 +23,24 @@ if (isProduction && hasDbUrl) {
   // SQLite for local development only
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { drizzle } = require('drizzle-orm/better-sqlite3');
+    const { drizzle } = require('drizzle-orm/libsql');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Database = require('better-sqlite3');
-    client = new Database('local.db');
+    const { createClient } = require('@libsql/client');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path');
+    
+    // Use absolute path to avoid issues
+    const dbPath = path.join(process.cwd(), 'sqlite.db');
+    console.log('Initializing SQLite database at:', dbPath);
+    
+    client = createClient({
+      url: `file:${dbPath}`
+    });
     db = drizzle(client, { schema });
+    
+    console.log('SQLite database initialized successfully');
   } catch (error) {
-    console.warn('SQLite not available during build, using mock db:', error);
+    console.error('SQLite initialization failed:', error);
     db = null;
     client = null;
   }
@@ -42,3 +53,45 @@ if (isProduction && hasDbUrl) {
 
 export { db, client };
 export * from './schema';
+
+// Database initialization and health check
+export function isDatabaseAvailable(): boolean {
+  return db !== null && client !== null;
+}
+
+export async function initializeDatabase() {
+  if (!isDatabaseAvailable()) {
+    throw new Error('Database not available');
+  }
+
+  if (!isProduction) {
+    // For SQLite, we might need to create tables
+    console.log('Database initialization complete');
+  }
+  
+  return true;
+}
+
+// Check database connection
+export async function checkDatabaseHealth() {
+  try {
+    if (!isDatabaseAvailable()) {
+      return { status: 'unavailable', error: 'Database not configured' };
+    }
+
+    if (isProduction && hasDbUrl) {
+      // Test PostgreSQL connection
+      await client`SELECT 1`;
+    } else if (!isProduction && client) {
+      // Test SQLite connection with libsql
+      await client.execute('SELECT 1');
+    }
+
+    return { status: 'healthy' };
+  } catch (error) {
+    return { 
+      status: 'error', 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+}

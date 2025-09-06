@@ -11,7 +11,7 @@ export default defineConfig({
   dialect: isProduction ? 'postgresql' : 'sqlite',
   dbCredentials: isProduction 
     ? { url: process.env.DATABASE_URL! }
-    : { url: 'local.db' },
+    : { url: 'sqlite.db' },
   verbose: true,
   strict: true,
 });

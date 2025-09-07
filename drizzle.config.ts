@@ -3,13 +3,14 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
 
-const isProduction = process.env.NODE_ENV === 'production';
+// Force PostgreSQL mode for Neon database
+const usePostgreSQL = process.env.DATABASE_URL?.includes('postgresql://') || process.env.NODE_ENV === 'production';
 
 export default defineConfig({
-  schema: isProduction ? './src/lib/db/schema.ts' : './src/lib/db/sqlite-schema.ts',
+  schema: usePostgreSQL ? './src/lib/db/schema.ts' : './src/lib/db/sqlite-schema.ts',
   out: './src/lib/db/migrations',
-  dialect: isProduction ? 'postgresql' : 'sqlite',
-  dbCredentials: isProduction 
+  dialect: usePostgreSQL ? 'postgresql' : 'sqlite',
+  dbCredentials: usePostgreSQL 
     ? { url: process.env.DATABASE_URL! }
     : { url: 'sqlite.db' },
   verbose: true,

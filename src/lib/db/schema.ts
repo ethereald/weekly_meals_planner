@@ -148,6 +148,18 @@ export const plannedMeals = pgTable('planned_meals', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Daily Planned Meals Table (Simplified for daily planning without weekly plans)
+export const dailyPlannedMeals = pgTable('daily_planned_meals', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  mealId: uuid('meal_id').notNull().references(() => meals.id, { onDelete: 'cascade' }),
+  plannedDate: varchar('planned_date', { length: 10 }).notNull(), // ISO date string (YYYY-MM-DD)
+  mealSlot: varchar('meal_slot', { length: 50 }), // e.g., "breakfast", "lunch", "dinner", "snack", or custom
+  servings: integer('servings').default(2),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // Shopping Lists Table
 export const shoppingLists = pgTable('shopping_lists', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -200,6 +212,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   weeklyMealPlans: many(weeklyMealPlans),
   shoppingLists: many(shoppingLists),
   nutritionalGoals: many(nutritionalGoals),
+  dailyPlannedMeals: many(dailyPlannedMeals),
 }));
 
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
@@ -220,6 +233,7 @@ export const mealsRelations = relations(meals, ({ one, many }) => ({
   }),
   mealIngredients: many(mealIngredients),
   plannedMeals: many(plannedMeals),
+  dailyPlannedMeals: many(dailyPlannedMeals),
   mealTags: many(mealTags),
 }));
 
@@ -305,5 +319,16 @@ export const nutritionalGoalsRelations = relations(nutritionalGoals, ({ one }) =
   user: one(users, {
     fields: [nutritionalGoals.userId],
     references: [users.id],
+  }),
+}));
+
+export const dailyPlannedMealsRelations = relations(dailyPlannedMeals, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyPlannedMeals.userId],
+    references: [users.id],
+  }),
+  meal: one(meals, {
+    fields: [dailyPlannedMeals.mealId],
+    references: [meals.id],
   }),
 }));

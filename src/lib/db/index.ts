@@ -1,10 +1,13 @@
+// Load environment variables first
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
 // Environment-aware schema imports
-const isProduction = process.env.NODE_ENV === 'production';
-const hasDbUrl = Boolean(process.env.DATABASE_URL);
+const usePostgreSQL = process.env.DATABASE_URL?.includes('postgresql://') || process.env.NODE_ENV === 'production';
 
 // Import the appropriate schema based on environment
 let schema: any;
-if (isProduction && hasDbUrl) {
+if (usePostgreSQL) {
   // Use PostgreSQL schema for production
   schema = require('./schema');
 } else {
@@ -17,8 +20,8 @@ let db: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let client: any;
 
-if (isProduction && hasDbUrl) {
-  // PostgreSQL for production (only when DATABASE_URL is available)
+if (usePostgreSQL && process.env.DATABASE_URL) {
+  // PostgreSQL for production (when DATABASE_URL is available)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { drizzle } = require('drizzle-orm/postgres-js');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -29,8 +32,9 @@ if (isProduction && hasDbUrl) {
     max: 10,
   });
   db = drizzle(client, { schema });
-} else if (!isProduction) {
-  // Use PostgreSQL schema for consistency but with SQLite driver for local development
+  console.log('PostgreSQL database initialized');
+} else if (!usePostgreSQL) {
+  // Use SQLite for local development
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { drizzle } = require('drizzle-orm/libsql');
@@ -46,10 +50,9 @@ if (isProduction && hasDbUrl) {
     client = createClient({
       url: `file:${dbPath}`
     });
-    // Note: Using PostgreSQL schema with SQLite - may need table creation
     db = drizzle(client, { schema });
     
-    console.log('SQLite database initialized with PostgreSQL schema');
+    console.log('SQLite database initialized');
   } catch (error) {
     console.error('SQLite initialization failed:', error);
     db = null;
@@ -92,7 +95,7 @@ export async function initializeDatabase() {
     throw new Error('Database not available');
   }
 
-  if (!isProduction) {
+  if (!usePostgreSQL) {
     // For SQLite, we might need to create tables
     console.log('Database initialization complete');
   }
@@ -107,10 +110,10 @@ export async function checkDatabaseHealth() {
       return { status: 'unavailable', error: 'Database not configured' };
     }
 
-    if (isProduction && hasDbUrl) {
+    if (usePostgreSQL && process.env.DATABASE_URL) {
       // Test PostgreSQL connection
       await client`SELECT 1`;
-    } else if (!isProduction && client) {
+    } else if (!usePostgreSQL && client) {
       // Test SQLite connection with libsql
       await client.execute('SELECT 1');
     }

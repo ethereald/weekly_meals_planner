@@ -145,10 +145,24 @@ async function postHandler(request: AuthenticatedRequest) {
         .insert(meals)
         .values({
           userId,
+          categoryId: null, // Optional field - can be null
           name,
           description: description || null,
-          calories: calories || null,
+          difficulty: 'easy', // Default value
           cookTime: cookTime || null,
+          servings: 2, // Default value
+          calories: calories || null,
+          protein: null,
+          carbs: null,
+          fat: null,
+          fiber: null,
+          sugar: null,
+          sodium: null,
+          instructions: '', // Required field - provide empty string
+          notes: null,
+          imageUrl: null,
+          isPublic: false, // Default value
+          isFavorite: false, // Default value
         })
         .returning();
 

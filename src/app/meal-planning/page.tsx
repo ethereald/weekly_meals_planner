@@ -76,30 +76,71 @@ function MealPlanningContent() {
         plannedMeals = await mealsApi.getPlannedMealsInRange(startDateStr, endDateStr);
       } else {
         // Load meals for a single date
+        console.log('🔥 LOADING MEALS FOR DATE:', format(date, 'yyyy-MM-dd'));
         const dateStr = format(date, 'yyyy-MM-dd');
         plannedMeals = await mealsApi.getPlannedMeals(dateStr);
       }
       
-      // Convert API response to Meal interface
-      const convertedMeals: Meal[] = plannedMeals.map((plannedMeal: PlannedMeal) => ({
-        id: plannedMeal.id,
-        mealId: plannedMeal.mealId,
-        name: plannedMeal.meal.name,
-        description: plannedMeal.meal.description || undefined,
-        category: (plannedMeal.meal.tags?.[0]?.name?.toLowerCase() as 'breakfast' | 'lunch' | 'dinner' | 'snack') || 'snack',
-        time: plannedMeal.mealSlot || undefined,
-        calories: plannedMeal.meal.calories || undefined,
-        cookTime: plannedMeal.meal.cookTime || undefined,
-        plannedDate: plannedMeal.plannedDate,
-        meal: plannedMeal.meal,
-        addedBy: {
-          userId: plannedMeal.creator.userId,
-          username: plannedMeal.creator.username,
-          addedAt: plannedMeal.meal.createdAt
-        }
-      }));
+      console.log('🔥 RAW PLANNED MEALS LOADED:', plannedMeals.length, plannedMeals);
       
-      console.log('✅ Loaded', convertedMeals.length, 'meals for', view, 'view');
+      // Convert API response to Meal interface
+      const convertedMeals: Meal[] = plannedMeals.map((plannedMeal: PlannedMeal) => {
+        // Try to determine category from multiple sources:
+        // 1. Check if mealSlot matches a category
+        // 2. Check if first tag matches a category
+        // 3. Default to 'snack'
+        const validCategories = ['breakfast', 'lunch', 'dinner', 'snack'];
+        let category: 'breakfast' | 'lunch' | 'dinner' | 'snack' = 'snack';
+        
+        // First try mealSlot (this is the time slot the meal was planned for)
+        if (plannedMeal.mealSlot && validCategories.includes(plannedMeal.mealSlot)) {
+          category = plannedMeal.mealSlot as 'breakfast' | 'lunch' | 'dinner' | 'snack';
+        }
+        // Then try first tag if it's a category tag
+        else if (plannedMeal.meal.tags?.[0]?.name) {
+          const tagName = plannedMeal.meal.tags[0].name.toLowerCase();
+          if (validCategories.includes(tagName)) {
+            category = tagName as 'breakfast' | 'lunch' | 'dinner' | 'snack';
+          }
+        }
+        
+        console.log('🔄 Converting meal:', {
+          id: plannedMeal.id,
+          mealId: plannedMeal.mealId,
+          name: plannedMeal.meal.name,
+          mealSlot: plannedMeal.mealSlot,
+          firstTag: plannedMeal.meal.tags?.[0]?.name,
+          allTags: plannedMeal.meal.tags?.map(t => t.name),
+          determinedCategory: category,
+          plannedDate: plannedMeal.plannedDate
+        });
+        
+        return {
+          id: plannedMeal.id,
+          mealId: plannedMeal.mealId,
+          name: plannedMeal.meal.name,
+          description: plannedMeal.meal.description || undefined,
+          category,
+          time: plannedMeal.mealSlot || undefined,
+          calories: plannedMeal.meal.calories || undefined,
+          cookTime: plannedMeal.meal.cookTime || undefined,
+          plannedDate: plannedMeal.plannedDate,
+          meal: plannedMeal.meal,
+          addedBy: {
+            userId: plannedMeal.creator.userId,
+            username: plannedMeal.creator.username,
+            addedAt: plannedMeal.meal.createdAt
+          }
+        };
+      });
+      
+      console.log('✅ Converted meals:', convertedMeals.length, 'meals for', view, 'view');
+      console.log('📋 Final converted meals:', convertedMeals.map(m => ({ 
+        id: m.id, 
+        name: m.name, 
+        category: m.category, 
+        plannedDate: m.plannedDate 
+      })));
       setMeals(convertedMeals);
     } catch (error) {
       console.error('Failed to load planned meals:', error);
@@ -201,8 +242,12 @@ function MealPlanningContent() {
 
   const handleDeleteMeal = async (id: string) => {
     try {
+      console.log('🗑️ Deleting meal with ID:', id);
       const success = await mealsApi.deletePlannedMeal(id);
+      console.log('🗑️ Delete result:', success);
+      
       if (success) {
+        console.log('🔄 Reloading meals after deletion...');
         // Reload meals based on current view to ensure consistency
         const dateRange = getDateRange(currentDate, view);
         if (view === 'daily') {
@@ -210,6 +255,7 @@ function MealPlanningContent() {
         } else {
           await loadPlannedMeals(currentDate, dateRange);
         }
+        console.log('✅ Meals reloaded after deletion');
       }
     } catch (error) {
       console.error('Failed to delete meal:', error);

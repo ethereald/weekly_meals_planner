@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
-import { db, meals, dailyPlannedMeals, users } from '@/lib/db';
+import { db, meals, dailyPlannedMeals, users, tags, mealTags } from '@/lib/db';
 import { eq, and, gte, lte } from 'drizzle-orm';
 
 async function getHandler(request: AuthenticatedRequest) {
@@ -65,13 +65,42 @@ async function getHandler(request: AuthenticatedRequest) {
       return NextResponse.json({ meals: plannedMealsData });
     } else {
       if (userOnly === 'true') {
-        // Get only current user's meals (for saved meals dropdown)
+        // Get only current user's meals with tags (for saved meals dropdown)
         const userMeals = await db
-          .select()
+          .select({
+            id: meals.id,
+            userId: meals.userId,
+            name: meals.name,
+            description: meals.description,
+            calories: meals.calories,
+            cookTime: meals.cookTime,
+            createdAt: meals.createdAt,
+            updatedAt: meals.updatedAt,
+          })
           .from(meals)
           .where(eq(meals.userId, userId));
 
-        return NextResponse.json({ meals: userMeals });
+        // Get tags for each meal
+        const mealsWithTags = await Promise.all(
+          userMeals.map(async (meal: any) => {
+            const mealTagsData = await db
+              .select({
+                id: tags.id,
+                name: tags.name,
+                color: tags.color,
+              })
+              .from(mealTags)
+              .innerJoin(tags, eq(mealTags.tagId, tags.id))
+              .where(eq(mealTags.mealId, meal.id));
+
+            return {
+              ...meal,
+              tags: mealTagsData,
+            };
+          })
+        );
+
+        return NextResponse.json({ meals: mealsWithTags });
       } else {
         // Get all meals from ALL users (for general meal library)
         const allMeals = await db
@@ -172,19 +201,64 @@ async function deleteHandler(request: AuthenticatedRequest) {
     const { searchParams } = new URL(request.url);
     const plannedMealId = searchParams.get('id');
 
+    console.log('🗑️ DELETE: Attempting to delete planned meal:', {
+      plannedMealId,
+      userId
+    });
+
     if (!plannedMealId) {
       return NextResponse.json({ error: 'Planned meal ID required' }, { status: 400 });
     }
 
-    // Delete the planned meal (only if it belongs to the current user)
-    const result = await db
-      .delete(dailyPlannedMeals)
-      .where(
-        and(
+    // First, check if the planned meal exists and who owns it
+    const existingMeal = await db
+      .select()
+      .from(dailyPlannedMeals)
+      .where(eq(dailyPlannedMeals.id, plannedMealId));
+
+    console.log('🗑️ DELETE: Found existing meal:', existingMeal);
+
+    if (existingMeal.length === 0) {
+      console.log('🗑️ DELETE: No meal found with ID:', plannedMealId);
+      return NextResponse.json({ error: 'Meal not found' }, { status: 404 });
+    }
+
+    console.log('🗑️ DELETE: Meal owner userId:', existingMeal[0].userId, 'Current user:', userId);
+
+    // Get current user's role from database
+    const currentUser = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const userRole = currentUser[0]?.role || 'user';
+    console.log('🗑️ DELETE: User role:', userRole);
+
+    // Check if user is admin or owns the meal
+    const isAdmin = userRole === 'admin';
+    const ownsmeal = existingMeal[0].userId === userId;
+
+    if (!isAdmin && !ownsmeal) {
+      console.log('🗑️ DELETE: Permission denied - not admin and not owner');
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+    }
+
+    console.log('🗑️ DELETE: Permission granted -', isAdmin ? 'admin user' : 'meal owner');
+
+    // Delete the planned meal (admin can delete any meal, user can only delete their own)
+    const deleteCondition = isAdmin 
+      ? eq(dailyPlannedMeals.id, plannedMealId)
+      : and(
           eq(dailyPlannedMeals.id, plannedMealId),
           eq(dailyPlannedMeals.userId, userId)
-        )
-      );
+        );
+
+    const result = await db
+      .delete(dailyPlannedMeals)
+      .where(deleteCondition);
+
+    console.log('🗑️ DELETE: Delete result:', result);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -123,6 +123,37 @@ export const mealsApi = {
     }
   },
 
+  // Create a new saved meal
+  async createSavedMeal(mealData: {
+    name: string;
+    description?: string;
+    calories?: number;
+    cookTime?: number;
+    tagNames?: string[];
+  }): Promise<SavedMeal | null> {
+    try {
+      const response = await fetch('/api/meals/saved', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(mealData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create saved meal');
+      }
+      
+      const data = await response.json();
+      return data.meal;
+    } catch (error) {
+      console.error('Error creating saved meal:', error);
+      throw error;
+    }
+  },
+
   // Create a new meal or plan an existing meal
   async createPlannedMeal(mealData: {
     name: string;
@@ -175,7 +206,7 @@ export const mealsApi = {
   },
 
   // Update a saved meal
-  async updateSavedMeal(mealId: string, updates: Partial<SavedMeal>): Promise<SavedMeal | null> {
+  async updateSavedMeal(mealId: string, updates: Partial<SavedMeal> & { tagNames?: string[] }): Promise<SavedMeal | null> {
     try {
       const response = await fetch(`/api/meals/saved/${mealId}`, {
         method: 'PUT',

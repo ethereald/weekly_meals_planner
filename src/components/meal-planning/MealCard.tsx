@@ -92,7 +92,7 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
                 {meal.category}
               </span>
             )}
-            {meal.time && (
+            {meal.time && meal.time !== meal.category && (
               <span className="text-xs text-gray-500">{meal.time}</span>
             )}
           </div>
@@ -167,6 +167,7 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
               </button>
               <button
                 onClick={() => {
+                  console.log('🗑️ MealCard: Delete button clicked for meal:', meal.id, meal.name);
                   onDelete(meal.id);
                   setShowMenu(false);
                 }}

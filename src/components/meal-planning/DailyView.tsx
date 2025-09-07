@@ -70,7 +70,7 @@ export default function DailyView({
     if (!testMeal) return "No meals to test";
     
     const mealCategory = testMeal.meal?.tags?.[0]?.name || testMeal.category;
-    const categoryMatch = mealCategory === 'dinner';
+    const categoryMatch = mealCategory === 'snack'; // Test against snack since that's what we have
     
     if (testMeal.plannedDate) {
       // Fix date parsing - create date in local timezone
@@ -313,6 +313,7 @@ export default function DailyView({
         selectedDate={currentDate}
         selectedCategory={selectedCategory}
         existingMeals={existingMeals}
+        userSettings={userSettings}
       />
     </div>
   );

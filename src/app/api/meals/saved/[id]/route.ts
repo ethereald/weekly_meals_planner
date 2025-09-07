@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { db, meals, dailyPlannedMeals } from '@/lib/db';
-import { eq, and } from 'drizzle-orm';
+import { db, meals, dailyPlannedMeals, tags, mealTags } from '@/lib/db';
+import { eq, and, inArray } from 'drizzle-orm';
 
 interface Context {
   params: Promise<{
@@ -27,6 +27,8 @@ export async function PUT(request: NextRequest, context: Context) {
     const mealId = params.id;
     const userId = decoded.userId;
     const updates = await request.json();
+
+    console.log('PUT: Updating meal:', mealId, 'with data:', updates);
 
     // First verify the meal belongs to the user
     const existingMeal = await db
@@ -64,7 +66,100 @@ export async function PUT(request: NextRequest, context: Context) {
       return NextResponse.json({ error: 'Failed to update meal' }, { status: 500 });
     }
 
-    return NextResponse.json({ meal: updatedMeal[0] });
+    // Handle tags if provided
+    if (updates.tagNames && Array.isArray(updates.tagNames)) {
+      console.log('PUT: Processing tags:', updates.tagNames);
+      
+      // First, remove all existing meal-tag relationships
+      await db
+        .delete(mealTags)
+        .where(eq(mealTags.mealId, mealId));
+      
+      console.log('PUT: Cleared existing meal-tag relationships');
+
+      if (updates.tagNames.length > 0) {
+        // Get existing tags that match the provided names
+        const existingTags = await db
+          .select()
+          .from(tags)
+          .where(inArray(tags.name, updates.tagNames));
+
+        console.log('PUT: Found existing tags:', existingTags);
+
+        const existingTagNames = existingTags.map((tag: any) => tag.name);
+        const newTagNames = updates.tagNames.filter((name: string) => !existingTagNames.includes(name));
+
+        console.log('PUT: New tags to create:', newTagNames);
+
+        // Create new tags if needed
+        let newTags = [];
+        if (newTagNames.length > 0) {
+          newTags = await db
+            .insert(tags)
+            .values(
+              newTagNames.map((name: string) => ({
+                name,
+                color: '#3B82F6', // Default blue color
+                userId, // Add userId to new tags
+              }))
+            )
+            .returning();
+          console.log('PUT: Created new tags:', newTags);
+        }
+
+        // Combine all tags and create meal-tag relationships
+        const allTags = [...existingTags, ...newTags];
+        console.log('PUT: All tags to associate:', allTags);
+        
+        if (allTags.length > 0) {
+          const mealTagRelations = allTags.map((tag: any) => ({
+            mealId,
+            tagId: tag.id,
+          }));
+          console.log('PUT: Creating meal-tag relationships:', mealTagRelations);
+          
+          await db
+            .insert(mealTags)
+            .values(mealTagRelations);
+            
+          console.log('PUT: Meal-tag relationships created successfully');
+        }
+      }
+    }
+
+    // Fetch the complete updated meal with tags for response
+    const mealWithTags = await db
+      .select({
+        id: meals.id,
+        userId: meals.userId,
+        name: meals.name,
+        description: meals.description,
+        calories: meals.calories,
+        cookTime: meals.cookTime,
+        createdAt: meals.createdAt,
+        updatedAt: meals.updatedAt,
+      })
+      .from(meals)
+      .where(eq(meals.id, mealId))
+      .limit(1);
+
+    // Get tags for this meal
+    const mealTagsData = await db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        color: tags.color,
+      })
+      .from(mealTags)
+      .innerJoin(tags, eq(mealTags.tagId, tags.id))
+      .where(eq(mealTags.mealId, mealId));
+
+    const result = {
+      ...mealWithTags[0],
+      tags: mealTagsData,
+    };
+
+    return NextResponse.json({ meal: result });
 
   } catch (error) {
     console.error('Error updating saved meal:', error);

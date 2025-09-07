@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { SavedMeal } from '@/lib/api/meals';
+import TagInput from '@/components/ui/TagInput';
 
 interface RecipeEditModalProps {
   isOpen: boolean;
@@ -20,13 +21,6 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<string[]>(['']);
   const [saving, setSaving] = useState(false);
-
-  // Available tag options
-  const availableTags = [
-    'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 'Beverage',
-    'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Low-Carb',
-    'High-Protein', 'Quick', 'Easy', 'Healthy', 'Comfort Food'
-  ];
 
   // Reset form when recipe changes
   useEffect(() => {
@@ -51,14 +45,6 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
     }));
   };
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
-  };
-
   const handleIngredientChange = (index: number, value: string) => {
     const newIngredients = [...ingredients];
     newIngredients[index] = value;
@@ -81,13 +67,16 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
 
     setSaving(true);
     try {
-      const updates: Partial<SavedMeal> = {
+      const updates: Partial<SavedMeal> & { tagNames?: string[] } = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         calories: formData.calories ? parseInt(formData.calories) : null,
         cookTime: formData.cookTime ? parseInt(formData.cookTime) : null,
-        // Tags will be handled separately in the future when we implement tag management
+        tagNames: selectedTags,
       };
+
+      console.log('Edit Modal: Submitting updates:', updates);
+      console.log('Edit Modal: Selected tags:', selectedTags);
 
       await onSave(updates);
     } catch (error) {
@@ -163,25 +152,11 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Tags
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {availableTags.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
-                        selectedTags.includes(tag)
-                          ? 'bg-blue-100 border-blue-300 text-blue-800'
-                          : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Select tags to categorize your recipe
-                </p>
+                <TagInput
+                  selectedTags={selectedTags}
+                  onTagsChange={setSelectedTags}
+                  placeholder="Type to add or select tags..."
+                />
               </div>
 
               {/* Nutrition Info */}

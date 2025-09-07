@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Meal } from './MealCard';
 import { SavedMeal } from '../../lib/api/meals';
+import { UserSettings } from '../../lib/auth-client';
 
 interface MealFormModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface MealFormModalProps {
   selectedDate?: Date;
   selectedCategory?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   existingMeals?: SavedMeal[]; // Pass saved meals from API
+  userSettings?: UserSettings | null; // Add user settings prop
 }
 
 export default function MealFormModal({
@@ -21,7 +23,8 @@ export default function MealFormModal({
   editingMeal,
   selectedDate,
   selectedCategory,
-  existingMeals = []
+  existingMeals = [],
+  userSettings
 }: MealFormModalProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -32,6 +35,21 @@ export default function MealFormModal({
 
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [isLoadingMeals, setIsLoadingMeals] = useState(false);
+
+  // Get enabled categories from user settings
+  const enabledCategories = userSettings?.enabledMealCategories || ['breakfast', 'lunch', 'dinner', 'snack'];
+  
+  // Memoize category options to prevent infinite re-renders
+  const categoryOptions = useMemo(() => [
+    { value: 'breakfast', label: 'Breakfast' },
+    { value: 'lunch', label: 'Lunch' },
+    { value: 'dinner', label: 'Dinner' },
+    { value: 'snack', label: 'Snack' }
+  ].filter(option => enabledCategories.includes(option.value)), [enabledCategories]);
+
+  // Check if there's only one enabled category
+  const hasOnlyOneCategory = categoryOptions.length === 1;
+  const singleCategory = hasOnlyOneCategory ? categoryOptions[0].value as 'breakfast' | 'lunch' | 'dinner' | 'snack' : null;
 
   // Use existing meals passed as prop
   useEffect(() => {
@@ -49,14 +67,16 @@ export default function MealFormModal({
         selectedMealId: ''
       });
     } else {
+      // Auto-select single category if only one is enabled
+      const defaultCategory = singleCategory || selectedCategory || categoryOptions[0]?.value || 'breakfast';
       setFormData({
         name: '',
-        category: selectedCategory || 'breakfast',
+        category: defaultCategory as 'breakfast' | 'lunch' | 'dinner' | 'snack',
         time: '',
         selectedMealId: ''
       });
     }
-  }, [editingMeal, selectedCategory]);
+  }, [editingMeal, selectedCategory, singleCategory, enabledCategories]);
 
   const handleMealSelection = (mealId: string) => {
     const selectedMeal = savedMeals.find(meal => meal.id === mealId);
@@ -76,7 +96,7 @@ export default function MealFormModal({
       mealId: formData.selectedMealId || '', // Will be set by API if creating new meal
       name: formData.name,
       category: formData.category,
-      time: formData.time || undefined
+      time: formData.category // Use category as the meal slot/time
     };
 
     onSave(mealData);
@@ -112,23 +132,39 @@ export default function MealFormModal({
 
         <div className="flex-1 overflow-y-auto overscroll-contain">
           <form onSubmit={handleSubmit} className="px-3 py-3 space-y-3 min-h-0">
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                Category *
-              </label>
-              <select
-                id="category"
-                required
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as 'breakfast' | 'lunch' | 'dinner' | 'snack', selectedMealId: '', name: '' })}
-                className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
-              >
-                <option value="breakfast">Breakfast</option>
-                <option value="lunch">Lunch</option>
-                <option value="dinner">Dinner</option>
-                <option value="snack">Snack</option>
-              </select>
-            </div>
+            {/* Only show category selection if there's more than one enabled category */}
+            {!hasOnlyOneCategory && (
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                  Category *
+                </label>
+                <select
+                  id="category"
+                  required
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as 'breakfast' | 'lunch' | 'dinner' | 'snack', selectedMealId: '', name: '' })}
+                  className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
+                >
+                  {categoryOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Show category info when only one category is enabled */}
+            {hasOnlyOneCategory && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <div className="w-full px-2 py-2 text-base bg-gray-50 border border-gray-200 rounded-md text-gray-700">
+                  {categoryOptions[0]?.label}
+                </div>
+              </div>
+            )}
 
             {!isLoadingMeals && filteredMeals.length > 0 && (
               <div>

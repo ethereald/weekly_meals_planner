@@ -33,6 +33,7 @@ async function postHandler(request: AuthenticatedRequest) {
         userId,
         name: name.trim(),
         description: description?.trim() || null,
+        instructions: '', // Provide default empty string for instructions
         calories: calories || null,
         cookTime: cookTime || null,
       })

@@ -81,6 +81,8 @@ export const {
   shoppingListItems,
   userSettings,
   nutritionalGoals,
+  globalSettings,
+  weeklyDaySettings,
   tags,
   mealTags
 } = schema;

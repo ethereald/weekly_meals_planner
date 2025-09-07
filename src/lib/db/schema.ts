@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean, integer, decimal, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, boolean, integer, decimal, pgEnum, date, jsonb } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // PostgreSQL Enums
@@ -199,6 +199,26 @@ export const nutritionalGoals = pgTable('nutritional_goals', {
   dailyFiber: decimal('daily_fiber', { precision: 8, scale: 2 }), // in grams
   dailySodium: decimal('daily_sodium', { precision: 8, scale: 2 }), // in mg
   isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Global Settings Table
+export const globalSettings = pgTable('global_settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  settingKey: varchar('setting_key', { length: 100 }).notNull().unique(),
+  settingValue: text('setting_value').notNull(),
+  lastUpdatedBy: uuid('last_updated_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Weekly Day Settings Table - stores enable/disable status for each week
+export const weeklyDaySettings = pgTable('weekly_day_settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  weekStartDate: date('week_start_date').notNull().unique(), // Monday of the week
+  enabledDays: jsonb('enabled_days').notNull().default('{"sunday":true,"monday":true,"tuesday":true,"wednesday":true,"thursday":true,"friday":true,"saturday":true}'),
+  lastUpdatedBy: uuid('last_updated_by').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

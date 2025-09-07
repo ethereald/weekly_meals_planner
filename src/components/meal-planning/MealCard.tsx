@@ -1,7 +1,45 @@
 'use client';
 
 import { useState } from 'react';
-import { formatDistanceToNow, format } from 'date-fns';
+
+// Generate consistent colors for users based on their username
+const getUserColor = (username: string) => {
+  const colors = [
+    { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200' },
+    { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200' },
+    { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200' },
+    { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-200' },
+    { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200' },
+    { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-200' },
+    { bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-200' },
+    { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-200' },
+    { bg: 'bg-teal-100', text: 'text-teal-800', border: 'border-teal-200' },
+    { bg: 'bg-cyan-100', text: 'text-cyan-800', border: 'border-cyan-200' },
+    { bg: 'bg-lime-100', text: 'text-lime-800', border: 'border-lime-200' },
+    { bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
+    { bg: 'bg-sky-100', text: 'text-sky-800', border: 'border-sky-200' },
+    { bg: 'bg-violet-100', text: 'text-violet-800', border: 'border-violet-200' },
+    { bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-200' },
+  ];
+  
+  // Improved hash function for better distribution
+  let hash = 0;
+  if (username.length === 0) return `${colors[0].bg} ${colors[0].text} ${colors[0].border}`;
+  
+  for (let i = 0; i < username.length; i++) {
+    const char = username.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // Ensure positive index
+  const colorIndex = Math.abs(hash) % colors.length;
+  const color = colors[colorIndex];
+  
+  console.log(`🎨 User "${username}" -> hash: ${hash} -> index: ${colorIndex} -> color: ${color.bg}`);
+  
+  return `${color.bg} ${color.text} ${color.border}`;
+};
 
 export interface Meal {
   id: string; // This is the planned meal ID
@@ -75,21 +113,6 @@ export default function MealCard({ meal, currentUser, onEdit, onDelete, compact 
     return canEditMeal() || canDeleteMeal();
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'breakfast':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'lunch':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'dinner':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'snack':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${
       compact ? 'p-3' : 'p-4'
@@ -97,29 +120,10 @@ export default function MealCard({ meal, currentUser, onEdit, onDelete, compact 
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            {/* Display tags or fallback to category */}
-            {meal.meal?.tags && meal.meal.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {meal.meal.tags.slice(0, 2).map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border"
-                    style={{
-                      backgroundColor: `${tag.color}20`,
-                      borderColor: `${tag.color}40`,
-                      color: tag.color
-                    }}
-                  >
-                    {tag.name}
-                  </span>
-                ))}
-                {meal.meal.tags.length > 2 && (
-                  <span className="text-xs text-gray-500">+{meal.meal.tags.length - 2}</span>
-                )}
-              </div>
-            ) : (
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(meal.category)}`}>
-                {meal.category}
+            {/* User bubble - show who added this meal */}
+            {meal.addedBy && (
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getUserColor(meal.addedBy.username)}`}>
+                {meal.addedBy.username}
               </span>
             )}
             {meal.time && meal.time !== meal.category && (
@@ -161,21 +165,6 @@ export default function MealCard({ meal, currentUser, onEdit, onDelete, compact 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {meal.meal?.cookTime || meal.cookTime}m
-                </span>
-              )}
-            </div>
-          )}
-          
-          {/* User Information */}
-          {meal.addedBy && (
-            <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>Added by {meal.addedBy.username}</span>
-              {!compact && (
-                <span title={format(new Date(meal.addedBy.addedAt), 'PPp')}>
-                  • {formatDistanceToNow(new Date(meal.addedBy.addedAt), { addSuffix: true })}
                 </span>
               )}
             </div>

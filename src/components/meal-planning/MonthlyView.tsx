@@ -17,6 +17,43 @@ import MealFormModal from './MealFormModal';
 import { SavedMeal } from '../../lib/api/meals';
 import { authApi, UserSettings } from '../../lib/auth-client';
 
+// Import the getUserColor function from MealCard
+const getUserColor = (username: string) => {
+  const colors = [
+    { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200' },
+    { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200' },
+    { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200' },
+    { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-200' },
+    { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200' },
+    { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-200' },
+    { bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-200' },
+    { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-200' },
+    { bg: 'bg-teal-100', text: 'text-teal-800', border: 'border-teal-200' },
+    { bg: 'bg-cyan-100', text: 'text-cyan-800', border: 'border-cyan-200' },
+    { bg: 'bg-lime-100', text: 'text-lime-800', border: 'border-lime-200' },
+    { bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
+    { bg: 'bg-sky-100', text: 'text-sky-800', border: 'border-sky-200' },
+    { bg: 'bg-violet-100', text: 'text-violet-800', border: 'border-violet-200' },
+    { bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-200' },
+  ];
+  
+  // Improved hash function for better distribution
+  let hash = 0;
+  if (username.length === 0) return `${colors[0].bg} ${colors[0].text} ${colors[0].border}`;
+  
+  for (let i = 0; i < username.length; i++) {
+    const char = username.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // Ensure positive index
+  const colorIndex = Math.abs(hash) % colors.length;
+  const color = colors[colorIndex];
+  
+  return `${color.bg} ${color.text} ${color.border}`;
+};
+
 interface MonthlyViewProps {
   currentDate: Date;
   meals: Meal[];
@@ -77,12 +114,12 @@ export default function MonthlyView({
     day = addDays(day, 1);
   }
 
-  // Define meal category colors and labels
+  // Define meal category outline colors (border styles)
   const mealCategoryConfig = {
-    breakfast: { color: 'bg-yellow-200', textColor: 'text-yellow-800', label: 'Breakfast' },
-    lunch: { color: 'bg-green-200', textColor: 'text-green-800', label: 'Lunch' },
-    dinner: { color: 'bg-blue-200', textColor: 'text-blue-800', label: 'Dinner' },
-    snack: { color: 'bg-purple-200', textColor: 'text-purple-800', label: 'Snacks' }
+    breakfast: { borderColor: 'border-yellow-400', textColor: 'text-yellow-800', label: 'Breakfast' },
+    lunch: { borderColor: 'border-green-400', textColor: 'text-green-800', label: 'Lunch' },
+    dinner: { borderColor: 'border-blue-400', textColor: 'text-blue-800', label: 'Dinner' },
+    snack: { borderColor: 'border-purple-400', textColor: 'text-purple-800', label: 'Snacks' }
   };
 
   // Get enabled meal categories with their configs
@@ -282,7 +319,8 @@ export default function MonthlyView({
 
                 {isCurrentMonth && mealCount > 0 && (
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
+                    {/* Meal count and calories - hidden on mobile */}
+                    <div className="hidden sm:flex items-center justify-between text-xs">
                       <span className="text-gray-600">{mealCount} meals</span>
                       <span className="text-gray-600">{dayCalories} cal</span>
                     </div>
@@ -291,13 +329,18 @@ export default function MonthlyView({
                     <div className="space-y-1">
                       {dayMeals.slice(0, 3).map((meal, index) => {
                         const categoryConfig = mealCategoryConfig[meal.category as keyof typeof mealCategoryConfig];
+                        const userColorClasses = meal.addedBy ? getUserColor(meal.addedBy.username) : 'bg-gray-100 text-gray-800 border-gray-200';
+                        
+                        // Extract background color from user color classes
+                        const userBgMatch = userColorClasses.match(/bg-(\w+-\d+)/);
+                        const userBg = userBgMatch ? userBgMatch[0] : 'bg-gray-100';
                         
                         return (
                           <div
                             key={index}
-                            className={`text-xs p-1 rounded truncate ${categoryConfig?.color || 'bg-gray-200'} ${
-                              categoryConfig?.textColor || 'text-gray-800'
-                            }`}
+                            className={`text-xs p-1 rounded truncate border-2 ${userBg} ${
+                              categoryConfig?.borderColor || 'border-gray-400'
+                            } ${categoryConfig?.textColor || 'text-gray-800'}`}
                           >
                             {meal.name}
                           </div>
@@ -325,14 +368,17 @@ export default function MonthlyView({
 
       {/* Legend */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <h3 className="text-sm font-medium text-gray-900 mb-3">Meal Types</h3>
+        <h3 className="text-sm font-medium text-gray-900 mb-3">Meal Types (Border Colors)</h3>
         <div className="flex flex-wrap gap-4">
           {enabledCategories.map(category => (
             <div key={category.key} className="flex items-center gap-2">
-              <div className={`w-3 h-3 ${category.color} rounded`}></div>
+              <div className={`w-3 h-3 border-2 ${category.borderColor} bg-gray-100 rounded`}></div>
               <span className="text-xs text-gray-600">{category.label}</span>
             </div>
           ))}
+        </div>
+        <div className="mt-3 text-xs text-gray-500">
+          Meal boxes show: User color fill + Meal category border
         </div>
       </div>
 

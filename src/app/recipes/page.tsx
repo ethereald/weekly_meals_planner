@@ -16,6 +16,8 @@ export default function RecipesPage() {
   const [editingRecipe, setEditingRecipe] = useState<SavedMeal | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [filteredRecipes, setFilteredRecipes] = useState<SavedMeal[]>([]);
 
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -43,6 +45,47 @@ export default function RecipesPage() {
     loadRecipes();
   }, [isAuthenticated]);
 
+  // Filter recipes based on selected tags
+  useEffect(() => {
+    if (selectedTags.length === 0) {
+      setFilteredRecipes(recipes);
+    } else {
+      const filtered = recipes.filter(recipe => {
+        if (!recipe.tags || recipe.tags.length === 0) {
+          return false; // Don't show untagged recipes when tags are selected
+        }
+        // Recipe must have at least one of the selected tags
+        return recipe.tags.some(tag => selectedTags.includes(tag.id));
+      });
+      setFilteredRecipes(filtered);
+    }
+  }, [recipes, selectedTags]);
+
+  // Get all unique tags from recipes
+  const getAllTags = () => {
+    const tagMap = new Map();
+    recipes.forEach(recipe => {
+      if (recipe.tags) {
+        recipe.tags.forEach(tag => {
+          tagMap.set(tag.id, tag);
+        });
+      }
+    });
+    return Array.from(tagMap.values());
+  };
+
+  const handleTagToggle = (tagId: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
+  const clearTagFilters = () => {
+    setSelectedTags([]);
+  };
+
   const handleEditRecipe = (recipe: SavedMeal) => {
     setEditingRecipe(recipe);
     setIsEditModalOpen(true);
@@ -64,6 +107,7 @@ export default function RecipesPage() {
         setRecipes(recipes.map(recipe => 
           recipe.id === editingRecipe.id ? updated : recipe
         ));
+        // Note: filteredRecipes will be updated automatically by the useEffect
         
         setIsEditModalOpen(false);
         setEditingRecipe(null);
@@ -76,11 +120,13 @@ export default function RecipesPage() {
   const handleDeleteRecipe = (recipeId: string) => {
     // Remove recipe from local state (RecipeList handles the actual deletion)
     setRecipes(recipes.filter(recipe => recipe.id !== recipeId));
+    // Note: filteredRecipes will be updated automatically by the useEffect
   };
 
   const handleAddMeal = (newMeal: SavedMeal) => {
     // Add the new meal to the local state
     setRecipes(prevRecipes => [newMeal, ...prevRecipes]);
+    // Note: filteredRecipes will be updated automatically by the useEffect
   };
 
   if (isLoading) {
@@ -150,8 +196,71 @@ export default function RecipesPage() {
           </div>
         </div>
 
+        {/* Tag Filter Section */}
+        {recipes.length > 0 && (
+          <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">Filter by tags:</span>
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                {getAllTags().length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {getAllTags().map(tag => (
+                      <button
+                        key={tag.id}
+                        onClick={() => handleTagToggle(tag.id)}
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                          selectedTags.includes(tag.id)
+                            ? 'border-2 shadow-sm'
+                            : 'border hover:shadow-sm'
+                        }`}
+                        style={{
+                          backgroundColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}20`,
+                          borderColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}60`,
+                          color: selectedTags.includes(tag.id) ? 'white' : tag.color
+                        }}
+                      >
+                        {tag.name}
+                        {selectedTags.includes(tag.id) && (
+                          <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No tags available</p>
+                )}
+              </div>
+              
+              {selectedTags.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {filteredRecipes.length} of {recipes.length} recipes
+                  </span>
+                  <button
+                    onClick={clearTagFilters}
+                    className="inline-flex items-center px-2 py-1 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                  >
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <RecipeList
-          recipes={recipes}
+          recipes={filteredRecipes}
           onEditRecipe={handleEditRecipe}
           onDeleteRecipe={handleDeleteRecipe}
         />

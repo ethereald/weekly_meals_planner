@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from './src/lib/auth';
 
 // Force Node.js runtime for JWT verification
 export const runtime = 'nodejs';
+
+// Try to import Node.js auth, fallback to edge-compatible version
+let verifyToken: (token: string) => { userId: string; username: string } | null;
+
+try {
+  // Use Node.js version if available
+  const auth = require('./src/lib/auth');
+  verifyToken = auth.verifyToken;
+} catch (error) {
+  // Fallback to edge-compatible version
+  const authEdge = require('./src/lib/auth-edge');
+  verifyToken = authEdge.verifyTokenEdge;
+}
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;

@@ -16,49 +16,13 @@ import { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
 import { SavedMeal } from '../../lib/api/meals';
 import { authApi, UserSettings } from '../../lib/auth-client';
-
-// Import the getUserColor function from MealCard
-const getUserColor = (username: string) => {
-  const colors = [
-    { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200' },
-    { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200' },
-    { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200' },
-    { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-200' },
-    { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200' },
-    { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-200' },
-    { bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-200' },
-    { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-200' },
-    { bg: 'bg-teal-100', text: 'text-teal-800', border: 'border-teal-200' },
-    { bg: 'bg-cyan-100', text: 'text-cyan-800', border: 'border-cyan-200' },
-    { bg: 'bg-lime-100', text: 'text-lime-800', border: 'border-lime-200' },
-    { bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
-    { bg: 'bg-sky-100', text: 'text-sky-800', border: 'border-sky-200' },
-    { bg: 'bg-violet-100', text: 'text-violet-800', border: 'border-violet-200' },
-    { bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-200' },
-  ];
-  
-  // Improved hash function for better distribution
-  let hash = 0;
-  if (username.length === 0) return `${colors[0].bg} ${colors[0].text} ${colors[0].border}`;
-  
-  for (let i = 0; i < username.length; i++) {
-    const char = username.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  
-  // Ensure positive index
-  const colorIndex = Math.abs(hash) % colors.length;
-  const color = colors[colorIndex];
-  
-  return `${color.bg} ${color.text} ${color.border}`;
-};
+import { getUserColor } from '@/lib/utils/userColors';
 
 interface MonthlyViewProps {
   currentDate: Date;
   meals: Meal[];
   existingMeals?: SavedMeal[];
-  currentUser: { id: string; username: string; role: string } | null;
+  currentUser: { id: string; username: string; displayName?: string; role: string } | null;
   onAddMeal: (meal: Omit<Meal, 'id'>, date: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;

@@ -41,6 +41,7 @@ export const mealTags = pgTable('meal_tags', {
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   username: varchar('username', { length: 255 }).notNull().unique(),
+  displayName: varchar('display_name', { length: 255 }),
   password: varchar('password', { length: 255 }).notNull(),
   role: varchar('role', { length: 50 }).notNull().default('user'),
   createdAt: timestamp('created_at').defaultNow(),

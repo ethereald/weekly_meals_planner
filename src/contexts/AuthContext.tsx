@@ -6,6 +6,7 @@ import { authApi } from '@/lib/auth-client';
 interface User {
   id: string;
   username: string;
+  displayName?: string;
   role: string;
   createdAt: string;
   updatedAt: string;
@@ -42,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const userData: User = {
             id: profile.user.id,
             username: profile.user.username,
+            displayName: profile.user.displayName,
             role: profile.user.role,
             createdAt: profile.user.createdAt || '',
             updatedAt: profile.user.updatedAt || '',

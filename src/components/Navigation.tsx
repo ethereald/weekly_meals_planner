@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
+import { getUserAvatarGradient } from '@/lib/utils/userColors';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -36,7 +37,7 @@ export default function Navigation() {
         ...(isAdmin ? [
           { href: '/admin', label: 'Admin', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' }
         ] : []),
-        { href: '/auth', label: 'Account', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+        { href: '/account', label: 'Account', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
       ] : [
         { href: '/auth', label: 'Login', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
       ])
@@ -49,6 +50,12 @@ export default function Navigation() {
       return true;
     }
     if (href === '/recipes' && pathname === '/recipes') {
+      return true;
+    }
+    if (href === '/admin' && pathname === '/admin') {
+      return true;
+    }
+    if (href === '/account' && pathname === '/account') {
       return true;
     }
     return pathname === href;
@@ -118,14 +125,14 @@ export default function Navigation() {
             <div className="hidden md:flex items-center gap-3">
               {/* User info display */}
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getUserAvatarGradient(user.username)}`}>
                   <span className="text-white font-semibold text-xs">
-                    {user.username.charAt(0).toUpperCase()}
+                    {(user.displayName || user.username).charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-gray-900 font-medium">
-                    {user.username}
+                    {user.displayName || user.username}
                   </span>
                   <span className="text-xs text-gray-500 capitalize">
                     {user.role}
@@ -204,14 +211,14 @@ export default function Navigation() {
                   <div className="space-y-3">
                     {/* User info in mobile */}
                     <div className="flex items-center gap-3 px-3 py-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getUserAvatarGradient(user.username)}`}>
                         <span className="text-white font-semibold">
-                          {user.username.charAt(0).toUpperCase()}
+                          {(user.displayName || user.username).charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-gray-900 font-medium">
-                          {user.username}
+                          {user.displayName || user.username}
                         </span>
                         <span className="text-sm text-gray-500 capitalize">
                           {user.role}

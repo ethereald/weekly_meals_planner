@@ -27,7 +27,8 @@ async function getHandler(request: AuthenticatedRequest) {
           meal: meals,
           creator: {
             userId: users.id,
-            username: users.username
+            username: users.username,
+            displayName: users.displayName
           }
         })
         .from(dailyPlannedMeals)
@@ -49,7 +50,8 @@ async function getHandler(request: AuthenticatedRequest) {
           meal: meals,
           creator: {
             userId: users.id,
-            username: users.username
+            username: users.username,
+            displayName: users.displayName
           }
         })
         .from(dailyPlannedMeals)
@@ -193,7 +195,8 @@ async function postHandler(request: AuthenticatedRequest) {
         meal: meals,
         creator: {
           userId: users.id,
-          username: users.username
+          username: users.username,
+          displayName: users.displayName
         }
       })
       .from(dailyPlannedMeals)
@@ -328,7 +331,8 @@ async function putHandler(request: AuthenticatedRequest) {
         meal: meals,
         creator: {
           userId: users.id,
-          username: users.username
+          username: users.username,
+          displayName: users.displayName
         }
       })
       .from(dailyPlannedMeals)

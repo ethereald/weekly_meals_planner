@@ -11,7 +11,7 @@ interface WeeklyViewProps {
   currentDate: Date;
   meals: Meal[];
   existingMeals?: SavedMeal[];
-  currentUser: { id: string; username: string; role: string } | null;
+  currentUser: { id: string; username: string; displayName?: string; role: string } | null;
   onAddMeal: (meal: Omit<Meal, 'id'>, date: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;

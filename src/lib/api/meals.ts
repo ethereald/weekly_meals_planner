@@ -27,6 +27,7 @@ export interface PlannedMeal {
   creator: {
     userId: string;
     username: string;
+    displayName?: string;
   };
 }
 

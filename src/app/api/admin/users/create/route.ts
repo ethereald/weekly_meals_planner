@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { username, password, role = 'user' } = await request.json();
+    const { username, displayName, password, role = 'user' } = await request.json();
 
     // Validate input
     const usernameValidation = validateUsername(username);
@@ -51,6 +51,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate display name if provided
+    if (displayName && typeof displayName === 'string' && displayName.length > 255) {
+      return NextResponse.json(
+        { error: 'Display name must be less than 255 characters' },
+        { status: 400 }
+      );
+    }
+
     // Check if user already exists
     const existingUser = await db.select().from(users).where(eq(users.username, username)).limit(1);
     if (existingUser.length > 0) {
@@ -66,11 +74,13 @@ export async function POST(request: NextRequest) {
     // Create user
     const [newUser] = await db.insert(users).values({
       username,
+      displayName: displayName?.trim() || null,
       password: hashedPassword,
       role,
     }).returning({
       id: users.id,
       username: users.username,
+      displayName: users.displayName,
       role: users.role,
       createdAt: users.createdAt,
     });

@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest, context: Context) {
 
     const params = await context.params;
     const userId = params.id;
-    const { username, password, role } = await request.json();
+    const { username, displayName, password, role } = await request.json();
 
     // Check if user exists
     const targetUser = await getUserWithRole(userId);
@@ -92,6 +92,14 @@ export async function PUT(request: NextRequest, context: Context) {
         return NextResponse.json({ error: 'Username already exists' }, { status: 409 });
       }
       updateData.username = username;
+    }
+
+    // Update display name if provided
+    if (displayName !== undefined) {
+      if (displayName && typeof displayName === 'string' && displayName.length > 255) {
+        return NextResponse.json({ error: 'Display name must be less than 255 characters' }, { status: 400 });
+      }
+      updateData.displayName = displayName?.trim() || null;
     }
 
     // Update password if provided

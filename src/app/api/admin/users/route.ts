@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const allUsers = await db.select({
       id: users.id,
       username: users.username,
+      displayName: users.displayName,
       role: users.role,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,

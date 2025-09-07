@@ -27,7 +27,7 @@ function MealPlanningContent() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<{ id: string; username: string; role: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; username: string; displayName?: string; role: string } | null>(null);
   
   // Check if debug mode is enabled via URL parameter
   const isDebugMode = searchParams.get('debug') === 'true';
@@ -41,7 +41,12 @@ function MealPlanningContent() {
       try {
         // Get current user
         const profile = await authApi.getProfile();
-        const user = { id: profile.user.id, username: profile.user.username, role: profile.user.role };
+        const user = { 
+          id: profile.user.id, 
+          username: profile.user.username, 
+          displayName: profile.user.displayName,
+          role: profile.user.role 
+        };
         setCurrentUser(user);
 
         // Load saved meals for current user only (for dropdown)
@@ -136,6 +141,7 @@ function MealPlanningContent() {
           addedBy: {
             userId: plannedMeal.creator.userId,
             username: plannedMeal.creator.username,
+            displayName: plannedMeal.creator.displayName,
             addedAt: plannedMeal.meal.createdAt
           }
         };

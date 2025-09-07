@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from './src/lib/auth';
 
+// Force Node.js runtime for JWT verification
+export const runtime = 'nodejs';
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
   const { pathname } = request.nextUrl;

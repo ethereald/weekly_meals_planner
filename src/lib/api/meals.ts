@@ -167,4 +167,47 @@ export const mealsApi = {
       return false;
     }
   },
+
+  // Update a saved meal
+  async updateSavedMeal(mealId: string, updates: Partial<SavedMeal>): Promise<SavedMeal | null> {
+    try {
+      const response = await fetch(`/api/meals/saved/${mealId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(updates),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update saved meal');
+      }
+      
+      const data = await response.json();
+      return data.meal;
+    } catch (error) {
+      console.error('Error updating saved meal:', error);
+      return null;
+    }
+  },
+
+  // Delete a saved meal
+  async deleteSavedMeal(mealId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`/api/meals/saved/${mealId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete saved meal');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting saved meal:', error);
+      return false;
+    }
+  },
 };

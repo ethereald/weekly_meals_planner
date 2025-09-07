@@ -99,20 +99,22 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Coming Soon - Recipes */}
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 opacity-60">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+          {/* Recipe Database Card */}
+          <Link href="/recipes" className="group">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group-hover:border-purple-300">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Recipe Database</h3>
               </div>
-              <h3 className="text-lg font-semibold text-gray-700">Recipe Database</h3>
+              <p className="text-gray-600 text-sm">
+                Manage your personal recipe collection with ingredients and nutritional information.
+              </p>
             </div>
-            <p className="text-gray-500 text-sm">
-              Browse and save your favorite recipes. Coming soon!
-            </p>
-          </div>
+          </Link>
 
           {/* Coming Soon - Shopping Lists */}
           <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 opacity-60">

@@ -222,8 +222,9 @@ export default function DailyView({
         </div>
       )}
       
-      {/* Daily Summary */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
+      {/* Sticky Daily Summary */}
+      <div className="sticky top-24 z-10 bg-gray-50 pb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
             {format(currentDate, 'EEEE, MMMM d, yyyy')}
@@ -247,6 +248,7 @@ export default function DailyView({
               </div>
             );
           })}
+        </div>
         </div>
       </div>
 

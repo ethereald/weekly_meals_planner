@@ -166,8 +166,9 @@ export default function WeeklyView({
         </div>
       )}
       
-      {/* Weekly Summary */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
+      {/* Sticky Weekly Summary */}
+      <div className="sticky top-24 z-10 bg-gray-50 pb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
         <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
           Week of {format(weekStart, 'MMMM d, yyyy')}
         </h2>
@@ -193,6 +194,7 @@ export default function WeeklyView({
               </div>
             );
           })}
+        </div>
         </div>
       </div>
 

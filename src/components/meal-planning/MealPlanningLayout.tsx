@@ -64,10 +64,11 @@ export default function MealPlanningLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="px-3 sm:px-6 py-3 sm:py-4">
-            <div className="flex flex-col gap-3 sm:gap-4">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 bg-gray-50 pb-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-3 sm:px-6 py-3 sm:py-4">
+              <div className="flex flex-col gap-3 sm:gap-4">
               {/* Title Row */}
               <div className="flex items-center justify-between sm:justify-start sm:gap-4">
                 <div className="flex items-center gap-2 sm:gap-4">
@@ -158,7 +159,7 @@ export default function MealPlanningLayout({
               </div>
 
               {/* Date Navigation Row */}
-              <div className="flex items-center justify-center gap-2 sm:gap-3">
+              <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3">
                 <button
                   onClick={handlePrevious}
                   className="p-1 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors flex-shrink-0"
@@ -168,7 +169,7 @@ export default function MealPlanningLayout({
                   </svg>
                 </button>
                 
-                <div className="text-base sm:text-lg font-semibold text-gray-900 text-center flex-1 min-w-0 px-2">
+                <div className="text-base sm:text-lg font-semibold text-gray-900 text-center sm:text-left flex-1 sm:flex-initial min-w-0 px-2">
                   <div className="truncate">
                     {getDateDisplay()}
                   </div>
@@ -192,6 +193,7 @@ export default function MealPlanningLayout({
               </div>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Content */}

@@ -223,8 +223,9 @@ export default function MonthlyView({
         </div>
       )}
       
-      {/* Monthly Summary */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      {/* Sticky Monthly Summary */}
+      <div className="sticky top-24 z-10 bg-gray-50 pb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           {format(currentDate, 'MMMM yyyy')}
         </h2>
@@ -265,6 +266,7 @@ export default function MonthlyView({
             </div>
             <div className="text-sm text-purple-800">Total calories</div>
           </div>
+        </div>
         </div>
       </div>
 

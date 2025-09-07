@@ -11,6 +11,7 @@ interface DailyViewProps {
   currentDate: Date;
   meals: Meal[];
   existingMeals?: SavedMeal[];
+  currentUser: { id: string; username: string; role: string } | null;
   onAddMeal: (meal: Omit<Meal, 'id'>, date?: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;
@@ -21,6 +22,7 @@ export default function DailyView({
   currentDate,
   meals,
   existingMeals = [],
+  currentUser,
   onAddMeal,
   onEditMeal,
   onDeleteMeal,
@@ -280,6 +282,7 @@ export default function DailyView({
                     <MealCard
                       key={meal.id}
                       meal={meal}
+                      currentUser={currentUser}
                       onEdit={handleEditMeal}
                       onDelete={onDeleteMeal}
                     />

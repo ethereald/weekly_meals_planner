@@ -105,11 +105,16 @@ export default function MealFormModal({
 
   if (!isOpen) return null;
 
-  // Filter meals by current category for better UX
-  const filteredMeals = savedMeals.filter(meal => 
-    meal.tags?.some(tag => tag.name.toLowerCase() === formData.category.toLowerCase()) || 
-    (!meal.tags || meal.tags.length === 0) // Include meals without tags as fallback
+  // Show all saved meals - organize by relevance but don't exclude any
+  const categoryMeals = savedMeals.filter(meal => 
+    meal.tags?.some(tag => tag.name.toLowerCase() === formData.category.toLowerCase())
   );
+  const otherMeals = savedMeals.filter(meal => 
+    !meal.tags?.some(tag => tag.name.toLowerCase() === formData.category.toLowerCase())
+  );
+  
+  // Combine category-specific meals first, then others
+  const filteredMeals = [...categoryMeals, ...otherMeals];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start sm:items-center sm:justify-center p-2 sm:p-4">
@@ -178,11 +183,24 @@ export default function MealFormModal({
                   className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
                 >
                   <option value="">Choose a saved meal...</option>
-                  {filteredMeals.map((meal) => (
-                    <option key={meal.id} value={meal.id}>
-                      {meal.name}
-                    </option>
-                  ))}
+                  {categoryMeals.length > 0 && (
+                    <optgroup label={`${formData.category.charAt(0).toUpperCase() + formData.category.slice(1)} meals`}>
+                      {categoryMeals.map((meal) => (
+                        <option key={meal.id} value={meal.id}>
+                          {meal.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {otherMeals.length > 0 && (
+                    <optgroup label="Other meals">
+                      {otherMeals.map((meal) => (
+                        <option key={meal.id} value={meal.id}>
+                          {meal.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
             )}

@@ -11,6 +11,7 @@ interface WeeklyViewProps {
   currentDate: Date;
   meals: Meal[];
   existingMeals?: SavedMeal[];
+  currentUser: { id: string; username: string; role: string } | null;
   onAddMeal: (meal: Omit<Meal, 'id'>, date: Date) => void;
   onEditMeal: (id: string, meal: Omit<Meal, 'id'>) => void;
   onDeleteMeal: (id: string) => void;
@@ -21,6 +22,7 @@ export default function WeeklyView({
   currentDate,
   meals,
   existingMeals = [],
+  currentUser,
   onAddMeal,
   onEditMeal,
   onDeleteMeal,
@@ -248,6 +250,7 @@ export default function WeeklyView({
                             <MealCard
                               key={meal.id}
                               meal={meal}
+                              currentUser={currentUser}
                               onEdit={handleEditMeal}
                               onDelete={onDeleteMeal}
                               compact

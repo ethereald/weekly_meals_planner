@@ -37,13 +37,42 @@ export interface Meal {
 
 interface MealCardProps {
   meal: Meal;
+  currentUser: { id: string; username: string; role: string } | null;
   onEdit: (meal: Meal) => void;
   onDelete: (mealId: string) => void;
   compact?: boolean;
 }
 
-export default function MealCard({ meal, onEdit, onDelete, compact = false }: MealCardProps) {
+export default function MealCard({ meal, currentUser, onEdit, onDelete, compact = false }: MealCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+
+  // Check if current user can delete this meal
+  const canDeleteMeal = () => {
+    if (!currentUser) return false;
+    
+    // Admin can delete any meal
+    if (currentUser.role === 'admin') return true;
+    
+    // User can delete their own meals
+    // Check if the meal was added by the current user
+    return meal.addedBy?.userId === currentUser.id;
+  };
+
+  // Check if current user can edit this meal
+  const canEditMeal = () => {
+    if (!currentUser) return false;
+    
+    // Admin can edit any meal
+    if (currentUser.role === 'admin') return true;
+    
+    // User can edit their own meals
+    return meal.addedBy?.userId === currentUser.id;
+  };
+
+  // Check if any actions are available
+  const hasAnyActions = () => {
+    return canEditMeal() || canDeleteMeal();
+  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -144,40 +173,46 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
           )}
         </div>
         
-        <div className="relative ml-2">
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
-          </button>
-          
-          {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-              <button
-                onClick={() => {
-                  onEdit(meal);
-                  setShowMenu(false);
-                }}
-                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-t-md"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => {
-                  console.log('🗑️ MealCard: Delete button clicked for meal:', meal.id, meal.name);
-                  onDelete(meal.id);
-                  setShowMenu(false);
-                }}
-                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-b-md"
-              >
-                Delete
-              </button>
-            </div>
-          )}
-        </div>
+        {hasAnyActions() && (
+          <div className="relative ml-2">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
+            
+            {showMenu && (
+              <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                {canEditMeal() && (
+                  <button
+                    onClick={() => {
+                      onEdit(meal);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-t-md"
+                  >
+                    Edit
+                  </button>
+                )}
+                {canDeleteMeal() && (
+                  <button
+                    onClick={() => {
+                      console.log('🗑️ MealCard: Delete button clicked for meal:', meal.id, meal.name);
+                      onDelete(meal.id);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-b-md"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

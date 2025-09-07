@@ -27,7 +27,7 @@ function MealPlanningContent() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; username: string; role: string } | null>(null);
   
   // Check if debug mode is enabled via URL parameter
   const isDebugMode = searchParams.get('debug') === 'true';
@@ -41,7 +41,7 @@ function MealPlanningContent() {
       try {
         // Get current user
         const profile = await authApi.getProfile();
-        const user = { id: profile.user.id, username: profile.user.username };
+        const user = { id: profile.user.id, username: profile.user.username, role: profile.user.role };
         setCurrentUser(user);
 
         // Load saved meals for current user only (for dropdown)
@@ -304,6 +304,7 @@ function MealPlanningContent() {
           currentDate={currentDate}
           meals={meals}
           existingMeals={savedMeals}
+          currentUser={currentUser}
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}
@@ -316,6 +317,7 @@ function MealPlanningContent() {
           currentDate={currentDate}
           meals={meals}
           existingMeals={savedMeals}
+          currentUser={currentUser}
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}
@@ -328,6 +330,7 @@ function MealPlanningContent() {
           currentDate={currentDate}
           meals={meals}
           existingMeals={savedMeals}
+          currentUser={currentUser}
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onDeleteMeal={handleDeleteMeal}

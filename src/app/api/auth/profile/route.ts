@@ -22,6 +22,7 @@ async function handler(request: AuthenticatedRequest) {
       user: {
         id: userDetails.id,
         username: userDetails.username,
+        role: userDetails.role,
         createdAt: userDetails.createdAt,
         updatedAt: userDetails.updatedAt,
       },

@@ -1,3 +1,4 @@
+![Weekly Meals Planner Logo](./public/icons/icon.svg)
 # Weekly Meals Planner
 
 A comprehensive meal planning application built with Next.js 15, TypeScript, and Tailwind CSS. Features multi-user authentication, dual database support (SQLite for development, PostgreSQL for production), and a complete meal planning system.

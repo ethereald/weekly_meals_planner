@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navigation from "../components/Navigation";
 import { AuthProvider } from "../contexts/AuthContext";
+import PWARegistration from "../components/PWARegistration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +18,60 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Weekly Meals Planner",
   description: "Plan your meals for the week, track nutrition, and generate shopping lists.",
+  keywords: ["meal planning", "nutrition", "recipes", "weekly planner", "food", "cooking"],
+  authors: [{ name: "Weekly Meals Planner" }],
+  creator: "Weekly Meals Planner",
+  publisher: "Weekly Meals Planner",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
+  openGraph: {
+    title: "Weekly Meals Planner",
+    description: "Plan your meals for the week, track nutrition, and generate shopping lists.",
+    type: "website",
+    locale: "en_US",
+    siteName: "Weekly Meals Planner",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Weekly Meals Planner",
+    description: "Plan your meals for the week, track nutrition, and generate shopping lists.",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/apple-touch-icon-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/apple-touch-icon-120x120.png", sizes: "120x120", type: "image/png" },
+    ],
+    other: [
+      {
+        rel: "mask-icon",
+        url: "/icons/icon-maskable.svg",
+        color: "#3B82F6",
+      },
+    ],
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Weekly Meals Planner",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "application-name": "Weekly Meals Planner",
+    "msapplication-TileColor": "#3B82F6",
+    "msapplication-config": "/browserconfig.xml",
+    "theme-color": "#3B82F6",
+  },
 };
 
 export default function RootLayout({
@@ -26,12 +81,28 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <meta name="theme-color" content="#3B82F6" />
+        <meta name="background-color" content="#ffffff" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Meals Planner" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="application-name" content="Weekly Meals Planner" />
+        <meta name="msapplication-TileColor" content="#3B82F6" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="format-detection" content="telephone=no" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="shortcut icon" href="/favicon.svg" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
           <Navigation />
           {children}
+          <PWARegistration />
         </AuthProvider>
       </body>
     </html>

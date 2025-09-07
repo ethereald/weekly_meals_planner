@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Sitemap (optional - you can create one later)
+# Sitemap: https://yourweeklymealplanner.com/sitemap.xml

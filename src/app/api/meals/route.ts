@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
-import { db } from '@/lib/db';
-import { meals, dailyPlannedMeals, users } from '@/lib/db/sqlite-schema';
+import { db, meals, dailyPlannedMeals, users } from '@/lib/db';
 import { eq, and, gte, lte } from 'drizzle-orm';
 
 async function getHandler(request: AuthenticatedRequest) {

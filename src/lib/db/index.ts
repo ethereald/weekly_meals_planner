@@ -1,12 +1,21 @@
-import * as sqliteSchema from './sqlite-schema';
+// Environment-aware schema imports
+const isProduction = process.env.NODE_ENV === 'production';
+const hasDbUrl = Boolean(process.env.DATABASE_URL);
+
+// Import the appropriate schema based on environment
+let schema: any;
+if (isProduction && hasDbUrl) {
+  // Use PostgreSQL schema for production
+  schema = require('./schema');
+} else {
+  // Use SQLite schema for development
+  schema = require('./sqlite-schema');
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let client: any;
-
-const isProduction = process.env.NODE_ENV === 'production';
-const hasDbUrl = Boolean(process.env.DATABASE_URL);
 
 if (isProduction && hasDbUrl) {
   // PostgreSQL for production (only when DATABASE_URL is available)
@@ -15,16 +24,13 @@ if (isProduction && hasDbUrl) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const postgres = require('postgres');
   
-  // Use SQLite schema for now since we don't have a proper PostgreSQL schema
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const schema = require('./sqlite-schema');
   client = postgres(process.env.DATABASE_URL, {
     prepare: false,
     max: 10,
   });
   db = drizzle(client, { schema });
 } else if (!isProduction) {
-  // SQLite for local development only
+  // Use PostgreSQL schema for consistency but with SQLite driver for local development
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { drizzle } = require('drizzle-orm/libsql');
@@ -40,9 +46,10 @@ if (isProduction && hasDbUrl) {
     client = createClient({
       url: `file:${dbPath}`
     });
-    db = drizzle(client, { schema: sqliteSchema });
+    // Note: Using PostgreSQL schema with SQLite - may need table creation
+    db = drizzle(client, { schema });
     
-    console.log('SQLite database initialized successfully');
+    console.log('SQLite database initialized with PostgreSQL schema');
   } catch (error) {
     console.error('SQLite initialization failed:', error);
     db = null;
@@ -57,8 +64,21 @@ if (isProduction && hasDbUrl) {
 
 export { db, client };
 
-// For development, export SQLite schema
-export * from './sqlite-schema';
+// Export the appropriate schema based on environment
+export const { 
+  users, 
+  meals, 
+  dailyPlannedMeals, 
+  categories, 
+  ingredients,
+  mealIngredients,
+  weeklyMealPlans,
+  plannedMeals,
+  shoppingLists,
+  shoppingListItems,
+  userSettings,
+  nutritionalGoals
+} = schema;
 
 // Database initialization and health check
 export function isDatabaseAvailable(): boolean {

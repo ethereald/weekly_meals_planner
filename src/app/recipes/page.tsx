@@ -2,42 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authApi } from '@/lib/auth-client';
+import { useAuth } from '@/contexts/AuthContext';
 import { mealsApi, SavedMeal } from '@/lib/api/meals';
 import RecipeList from '@/components/recipes/RecipeList';
 import RecipeEditModal from '@/components/recipes/RecipeEditModal';
 
 export default function RecipesPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [recipes, setRecipes] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingRecipe, setEditingRecipe] = useState<SavedMeal | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null);
 
-  // Load user and recipes
+  // Redirect to auth if not authenticated
   useEffect(() => {
-    const initializeData = async () => {
-      try {
-        // Get current user
-        const profile = await authApi.getProfile();
-        const user = { id: profile.user.id, username: profile.user.username };
-        setCurrentUser(user);
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
-        // Load user's saved meals/recipes
+  // Load recipes when authenticated
+  useEffect(() => {
+    const loadRecipes = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        setLoading(true);
         const savedMeals = await mealsApi.getUserSavedMeals();
         setRecipes(savedMeals);
       } catch (error) {
         console.error('Failed to load recipes:', error);
-        // Redirect to login if auth fails
-        router.push('/auth');
       } finally {
         setLoading(false);
       }
     };
 
-    initializeData();
-  }, [router]);
+    loadRecipes();
+  }, [isAuthenticated]);
 
   const handleEditRecipe = (recipe: SavedMeal) => {
     setEditingRecipe(recipe);
@@ -65,20 +67,31 @@ export default function RecipesPage() {
     }
   };
 
-  const handleDeleteRecipe = async (recipeId: string) => {
-    if (!confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const success = await mealsApi.deleteSavedMeal(recipeId);
-      if (success) {
-        setRecipes(recipes.filter(recipe => recipe.id !== recipeId));
-      }
-    } catch (error) {
-      console.error('Failed to delete recipe:', error);
-    }
+  const handleDeleteRecipe = (recipeId: string) => {
+    // Remove recipe from local state (RecipeList handles the actual deletion)
+    setRecipes(recipes.filter(recipe => recipe.id !== recipeId));
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -193,21 +193,50 @@ export const mealsApi = {
   },
 
   // Delete a saved meal
-  async deleteSavedMeal(mealId: string): Promise<boolean> {
+  async deleteSavedMeal(mealId: string, force: boolean = false): Promise<boolean> {
     try {
-      const response = await fetch(`/api/meals/saved/${mealId}`, {
+      const url = force ? `/api/meals/saved/${mealId}?force=true` : `/api/meals/saved/${mealId}`;
+      const response = await fetch(url, {
         method: 'DELETE',
         credentials: 'include',
       });
       
       if (!response.ok) {
-        throw new Error('Failed to delete saved meal');
+        const errorData = await response.text();
+        console.error('Delete meal failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorData
+        });
+        throw new Error(`Failed to delete saved meal: ${response.status} ${response.statusText}`);
       }
       
       return true;
     } catch (error) {
       console.error('Error deleting saved meal:', error);
       return false;
+    }
+  },
+
+  // Get planned meals info for a recipe (to show where it's being used)
+  async getPlannedMealsForRecipe(mealId: string): Promise<{ count: number; dates: string[] }> {
+    try {
+      const response = await fetch(`/api/meals/saved/${mealId}/planned`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', response.status, errorText);
+        throw new Error(`Failed to get planned meals info: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error getting planned meals info:', error);
+      return { count: 0, dates: [] };
     }
   },
 };

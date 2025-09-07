@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SavedMeal, mealsApi } from '@/lib/api/meals';
 
 interface RecipeListProps {
@@ -19,6 +19,39 @@ export default function RecipeList({ recipes, onEditRecipe, onDeleteRecipe }: Re
     plannedInfo: null,
     isLoading: false
   });
+  
+  const [recipeCounts, setRecipeCounts] = useState<Record<string, number>>({});
+  const [countsLoading, setCountsLoading] = useState(true);
+
+  // Load planned meal counts for all recipes
+  useEffect(() => {
+    const loadRecipeCounts = async () => {
+      if (recipes.length === 0) {
+        setCountsLoading(false);
+        return;
+      }
+
+      setCountsLoading(true);
+      const counts: Record<string, number> = {};
+      
+      // Load counts for all recipes in parallel
+      const countPromises = recipes.map(async (recipe) => {
+        try {
+          const plannedInfo = await mealsApi.getPlannedMealsForRecipe(recipe.id);
+          counts[recipe.id] = plannedInfo.count;
+        } catch (error) {
+          console.error(`Failed to load count for recipe ${recipe.id}:`, error);
+          counts[recipe.id] = 0;
+        }
+      });
+      
+      await Promise.all(countPromises);
+      setRecipeCounts(counts);
+      setCountsLoading(false);
+    };
+
+    loadRecipeCounts();
+  }, [recipes]);
 
   const handleDeleteClick = async (recipe: SavedMeal) => {
     setDeleteConfirm({ recipe, plannedInfo: null, isLoading: true });
@@ -75,6 +108,8 @@ export default function RecipeList({ recipes, onEditRecipe, onDeleteRecipe }: Re
           <RecipeCard
             key={recipe.id}
             recipe={recipe}
+            plannedCount={recipeCounts[recipe.id] || 0}
+            countLoading={countsLoading}
             onEdit={() => onEditRecipe(recipe)}
             onDelete={() => handleDeleteClick(recipe)}
           />
@@ -97,20 +132,38 @@ export default function RecipeList({ recipes, onEditRecipe, onDeleteRecipe }: Re
 
 interface RecipeCardProps {
   recipe: SavedMeal;
+  plannedCount: number;
+  countLoading: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-function RecipeCard({ recipe, onEdit, onDelete }: RecipeCardProps) {
+function RecipeCard({ recipe, plannedCount, countLoading, onEdit, onDelete }: RecipeCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="font-medium text-gray-900 truncate" title={recipe.name}>
-              {recipe.name}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-gray-900 truncate" title={recipe.name}>
+                {recipe.name}
+              </h3>
+              {/* Planned count badge */}
+              {countLoading ? (
+                <div className="animate-pulse bg-gray-200 rounded-full px-2 py-1 text-xs">
+                  <span className="invisible">0</span>
+                </div>
+              ) : (
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  plannedCount > 0 
+                    ? 'bg-blue-100 text-blue-800 border border-blue-200' 
+                    : 'bg-gray-100 text-gray-600 border border-gray-200'
+                }`}>
+                  {plannedCount} cooked
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 mt-1">
               {/* Tags */}
               {recipe.tags && recipe.tags.length > 0 ? (

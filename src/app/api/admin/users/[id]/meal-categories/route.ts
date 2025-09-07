@@ -119,7 +119,6 @@ export async function PUT(
       await db.insert(userSettings).values({
         userId,
         enabledMealCategories: categoriesJson,
-        updatedAt: new Date().toISOString()
       });
     } else {
       // Update existing settings
@@ -127,7 +126,6 @@ export async function PUT(
         .update(userSettings)
         .set({
           enabledMealCategories: categoriesJson,
-          updatedAt: new Date().toISOString()
         })
         .where(eq(userSettings.userId, userId));
     }

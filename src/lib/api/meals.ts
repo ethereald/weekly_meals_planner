@@ -163,6 +163,7 @@ export const mealsApi = {
     description?: string;
     calories?: number;
     cookTime?: number;
+    notes?: string;
   }): Promise<PlannedMeal | null> {
     try {
       const response = await fetch('/api/meals', {
@@ -202,6 +203,35 @@ export const mealsApi = {
     } catch (error) {
       console.error('Error deleting planned meal:', error);
       return false;
+    }
+  },
+
+  // Update a planned meal
+  async updatePlannedMeal(plannedMealId: string, mealData: {
+    name: string;
+    category: string;
+    time?: string;
+    notes?: string;
+  }): Promise<PlannedMeal | null> {
+    try {
+      const response = await fetch(`/api/meals?id=${plannedMealId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(mealData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update planned meal');
+      }
+      
+      const data = await response.json();
+      return data.meal;
+    } catch (error) {
+      console.error('Error updating planned meal:', error);
+      return null;
     }
   },
 

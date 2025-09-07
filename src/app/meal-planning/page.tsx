@@ -128,6 +128,7 @@ function MealPlanningContent() {
           description: plannedMeal.meal.description || undefined,
           category,
           time: plannedMeal.mealSlot || undefined,
+          notes: plannedMeal.notes || undefined, // Map the planned meal notes
           calories: plannedMeal.meal.calories || undefined,
           cookTime: plannedMeal.meal.cookTime || undefined,
           plannedDate: plannedMeal.plannedDate,
@@ -211,6 +212,7 @@ function MealPlanningContent() {
         description: mealData.description,
         calories: mealData.calories,
         cookTime: mealData.cookTime,
+        notes: mealData.notes,
       });
 
       if (plannedMeal) {
@@ -236,13 +238,30 @@ function MealPlanningContent() {
   };
 
   const handleEditMeal = async (id: string, mealData: Omit<Meal, 'id'>) => {
-    // For now, we'll implement this as delete + create
-    // In a real app, you'd want a proper update endpoint
     try {
-      await handleDeleteMeal(id);
-      await handleAddMeal(mealData);
+      console.log('✏️ Updating meal with ID:', id, 'Data:', mealData);
+      
+      const updatedMeal = await mealsApi.updatePlannedMeal(id, {
+        name: mealData.name,
+        category: mealData.category,
+        time: mealData.time,
+        notes: mealData.notes,
+      });
+
+      if (updatedMeal) {
+        console.log('✅ Meal updated successfully, reloading data...');
+        
+        // Reload meals based on current view to ensure consistency
+        const dateRange = getDateRange(currentDate, view);
+        if (view === 'daily') {
+          await loadPlannedMeals(currentDate);
+        } else {
+          await loadPlannedMeals(currentDate, dateRange);
+        }
+        console.log('🔄 Data reloaded after meal update');
+      }
     } catch (error) {
-      console.error('Failed to edit meal:', error);
+      console.error('Failed to update meal:', error);
     }
   };
 

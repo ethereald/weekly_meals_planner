@@ -121,7 +121,7 @@ async function postHandler(request: AuthenticatedRequest) {
     const userId = request.user!.userId;
 
     const body = await request.json();
-    const { name, category, time, plannedDate, description, calories, cookTime } = body;
+    const { name, category, time, plannedDate, description, calories, cookTime, notes } = body;
 
     if (!name || !plannedDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -177,6 +177,7 @@ async function postHandler(request: AuthenticatedRequest) {
         mealId,
         plannedDate,
         mealSlot: time || null,
+        notes: notes || null,
       })
       .returning();
 
@@ -281,6 +282,69 @@ async function deleteHandler(request: AuthenticatedRequest) {
   }
 }
 
+async function putHandler(request: AuthenticatedRequest) {
+  try {
+    const userId = request.user!.userId;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Meal ID is required' }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { name, category, time, notes } = body;
+
+    if (!name) {
+      return NextResponse.json({ error: 'Meal name is required' }, { status: 400 });
+    }
+
+    // Update the planned meal
+    const updatedMeal = await db
+      .update(dailyPlannedMeals)
+      .set({
+        mealSlot: time || null,
+        notes: notes || null,
+      })
+      .where(and(
+        eq(dailyPlannedMeals.id, id),
+        eq(dailyPlannedMeals.userId, userId)
+      ))
+      .returning();
+
+    if (updatedMeal.length === 0) {
+      return NextResponse.json({ error: 'Meal not found or access denied' }, { status: 404 });
+    }
+
+    // Return the complete updated meal data with creator info
+    const completeMeal = await db
+      .select({
+        id: dailyPlannedMeals.id,
+        mealId: dailyPlannedMeals.mealId,
+        plannedDate: dailyPlannedMeals.plannedDate,
+        mealSlot: dailyPlannedMeals.mealSlot,
+        servings: dailyPlannedMeals.servings,
+        notes: dailyPlannedMeals.notes,
+        meal: meals,
+        creator: {
+          userId: users.id,
+          username: users.username
+        }
+      })
+      .from(dailyPlannedMeals)
+      .innerJoin(meals, eq(dailyPlannedMeals.mealId, meals.id))
+      .innerJoin(users, eq(meals.userId, users.id))
+      .where(eq(dailyPlannedMeals.id, id))
+      .limit(1);
+
+    return NextResponse.json({ meal: completeMeal[0] });
+  } catch (error) {
+    console.error('Error updating meal:', error);
+    return NextResponse.json({ error: 'Failed to update meal' }, { status: 500 });
+  }
+}
+
 export const GET = withAuth(getHandler);
 export const POST = withAuth(postHandler);
+export const PUT = withAuth(putHandler);
 export const DELETE = withAuth(deleteHandler);

@@ -29,8 +29,8 @@ export default function MealFormModal({
   const [formData, setFormData] = useState({
     name: '',
     category: 'breakfast' as 'breakfast' | 'lunch' | 'dinner' | 'snack',
-    time: '',
-    selectedMealId: ''
+    selectedMealId: '',
+    notes: ''
   });
 
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
@@ -63,8 +63,8 @@ export default function MealFormModal({
       setFormData({
         name: editingMeal.name,
         category: editingMeal.category,
-        time: editingMeal.time || '',
-        selectedMealId: ''
+        selectedMealId: '',
+        notes: editingMeal.notes || ''
       });
     } else {
       // Auto-select single category if only one is enabled
@@ -72,8 +72,8 @@ export default function MealFormModal({
       setFormData({
         name: '',
         category: defaultCategory as 'breakfast' | 'lunch' | 'dinner' | 'snack',
-        time: '',
-        selectedMealId: ''
+        selectedMealId: '',
+        notes: ''
       });
     }
   }, [editingMeal, selectedCategory, singleCategory, enabledCategories]);
@@ -96,7 +96,8 @@ export default function MealFormModal({
       mealId: formData.selectedMealId || '', // Will be set by API if creating new meal
       name: formData.name,
       category: formData.category,
-      time: formData.category // Use category as the meal slot/time
+      time: formData.category, // Use category as the meal slot/time
+      notes: formData.notes || undefined
     };
 
     onSave(mealData);
@@ -221,15 +222,16 @@ export default function MealFormModal({
             </div>
 
             <div>
-              <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
-                Time (optional)
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                Notes for this meal (optional)
               </label>
-              <input
-                type="time"
-                id="time"
-                value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
+              <textarea
+                id="notes"
+                rows={2}
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border resize-none"
+                placeholder="Add notes for this specific meal planning (e.g., 'make extra for guests', 'use leftovers')"
               />
             </div>
 

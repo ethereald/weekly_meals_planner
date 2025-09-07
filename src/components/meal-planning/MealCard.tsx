@@ -10,6 +10,7 @@ export interface Meal {
   description?: string;
   category: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   time?: string;
+  notes?: string; // Notes for this specific planned meal instance
   calories?: number;
   cookTime?: number;
   plannedDate?: string;
@@ -134,6 +135,14 @@ export default function MealCard({ meal, currentUser, onEdit, onDelete, compact 
             <p className="text-sm text-gray-600 mt-1 line-clamp-2">
               {meal.meal?.description || meal.description}
             </p>
+          )}
+          
+          {meal.notes && !compact && (
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800 italic">
+                Note: {meal.notes}
+              </p>
+            </div>
           )}
           
           {((meal.meal?.calories || meal.calories) || (meal.meal?.cookTime || meal.cookTime)) && (

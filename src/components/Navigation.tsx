@@ -8,7 +8,7 @@ import { useState } from 'react';
 export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading, isAdmin, logout } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin, user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Hide navigation on homepage when not authenticated (login page)
@@ -113,9 +113,29 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Auth section - Login or Logout button */}
-          {isAuthenticated ? (
-            <div className="hidden md:flex items-center">
+          {/* Auth section - User info or Login button */}
+          {isAuthenticated && user ? (
+            <div className="hidden md:flex items-center gap-3">
+              {/* User info display */}
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-xs">
+                    {user.username.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-gray-900 font-medium">
+                    {user.username}
+                  </span>
+                  <span className="text-xs text-gray-500 capitalize">
+                    {user.role}
+                    {isAdmin && ' • Admin'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="w-px h-6 bg-gray-300"></div>
+              
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
@@ -180,19 +200,39 @@ export default function Navigation() {
               
               {/* Mobile auth section */}
               <div className="border-t border-gray-200 pt-3">
-                {isAuthenticated ? (
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors w-full"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                  </button>
+                {isAuthenticated && user ? (
+                  <div className="space-y-3">
+                    {/* User info in mobile */}
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold">
+                          {user.username.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-900 font-medium">
+                          {user.username}
+                        </span>
+                        <span className="text-sm text-gray-500 capitalize">
+                          {user.role}
+                          {isAdmin && ' • Admin'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors w-full"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Logout
+                    </button>
+                  </div>
                 ) : (
                   <Link
                     href="/auth"

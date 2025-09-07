@@ -3,10 +3,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '@/lib/auth-client';
 
+interface User {
+  id: string;
+  username: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
+  user: User | null;
   checkAuth: () => Promise<void>;
   login: () => void;
   logout: () => void;
@@ -18,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   const checkAuth = async () => {
     try {
@@ -25,21 +35,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const isAuth = await authApi.checkAuth();
       setIsAuthenticated(isAuth);
       
-      // Check admin status if authenticated
       if (isAuth) {
         try {
-          const response = await fetch('/api/admin/users', {
-            credentials: 'include',
-          });
-          setIsAdmin(response.ok);
+          // Get user profile information
+          const profile = await authApi.getProfile();
+          const userData: User = {
+            id: profile.user.id,
+            username: profile.user.username,
+            role: profile.user.role,
+            createdAt: profile.user.createdAt || '',
+            updatedAt: profile.user.updatedAt || '',
+          };
+          setUser(userData);
+          setIsAdmin(userData.role === 'admin');
+          
+          // Double-check admin status with API call
+          try {
+            const response = await fetch('/api/admin/users', {
+              credentials: 'include',
+            });
+            // Use both role and API check for admin status
+            setIsAdmin(userData.role === 'admin' && response.ok);
+          } catch {
+            // If API call fails, rely on role only
+            setIsAdmin(userData.role === 'admin');
+          }
         } catch {
+          setUser(null);
           setIsAdmin(false);
         }
       } else {
+        setUser(null);
         setIsAdmin(false);
       }
     } catch {
       setIsAuthenticated(false);
+      setUser(null);
       setIsAdmin(false);
     } finally {
       setIsLoading(false);
@@ -55,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await authApi.logout();
       setIsAuthenticated(false);
+      setUser(null);
       setIsAdmin(false);
     } catch (error) {
       console.error('Logout failed:', error);
@@ -70,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated,
       isLoading,
       isAdmin,
+      user,
       checkAuth,
       login,
       logout

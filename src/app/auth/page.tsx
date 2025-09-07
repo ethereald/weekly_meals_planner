@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { AuthWrapper } from '@/components/auth/AuthWrapper';
 import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm';
+import { AdminSetupForm } from '@/components/auth/AdminSetupForm';
 import { authApi } from '@/lib/auth-client';
 
 export default function AuthPage() {
@@ -15,6 +16,8 @@ export default function AuthPage() {
   } | null>(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasUsers, setHasUsers] = useState(true); // Assume users exist by default
+  const [checkingUsers, setCheckingUsers] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -24,14 +27,32 @@ export default function AuthPage() {
           const profile = await authApi.getProfile();
           setUser(profile.user);
           setIsAuthenticated(true);
+          setHasUsers(true); // If user is authenticated, users obviously exist
         } else {
           setIsAuthenticated(false);
+          
+          // Check if any users exist in the database
+          try {
+            console.log('Checking if users exist...');
+            const response = await fetch('/api/auth/check-users');
+            console.log('Check users response status:', response.status);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('Check users response data:', data);
+            setHasUsers(data.hasUsers);
+          } catch (error) {
+            console.error('Failed to check users:', error);
+            setHasUsers(true); // Default to showing login form if check fails
+          }
         }
       } catch (error) {
         console.error('Failed to check auth:', error);
         setIsAuthenticated(false);
       }
       setLoading(false);
+      setCheckingUsers(false);
     };
 
     checkAuth();
@@ -50,12 +71,22 @@ export default function AuthPage() {
     }
   };
 
-  if (loading) {
+  const handleAdminSetupSuccess = () => {
+    // After admin setup, redirect to the home page
+    window.location.href = '/';
+  };
+
+  if (loading || checkingUsers) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-lg">Loading...</div>
       </div>
     );
+  }
+
+  // Show admin setup form if no users exist
+  if (!isAuthenticated && !hasUsers) {
+    return <AdminSetupForm onSuccess={handleAdminSetupSuccess} />;
   }
 
   if (!isAuthenticated) {

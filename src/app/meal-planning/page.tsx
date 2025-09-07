@@ -86,10 +86,10 @@ function MealPlanningContent() {
         mealId: plannedMeal.mealId,
         name: plannedMeal.meal.name,
         description: plannedMeal.meal.description || undefined,
-        category: plannedMeal.meal.mealType as 'breakfast' | 'lunch' | 'dinner' | 'snack',
-        time: plannedMeal.plannedTime || undefined,
+        category: (plannedMeal.meal.tags?.[0]?.name?.toLowerCase() as 'breakfast' | 'lunch' | 'dinner' | 'snack') || 'snack',
+        time: plannedMeal.mealSlot || undefined,
         calories: plannedMeal.meal.calories || undefined,
-        prepTime: plannedMeal.meal.prepTime || undefined,
+        cookTime: plannedMeal.meal.cookTime || undefined,
         plannedDate: plannedMeal.plannedDate,
         meal: plannedMeal.meal,
         addedBy: {
@@ -163,7 +163,7 @@ function MealPlanningContent() {
         plannedDate: dateStr,
         description: mealData.description,
         calories: mealData.calories,
-        prepTime: mealData.prepTime,
+        cookTime: mealData.cookTime,
       });
 
       if (plannedMeal) {

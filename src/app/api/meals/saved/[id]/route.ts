@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest, context: Context) {
     }
 
     // Build update object with only allowed fields
-    const allowedFields = ['name', 'description', 'mealType', 'calories', 'prepTime'];
+    const allowedFields = ['name', 'description', 'calories', 'cookTime'];
     const updateData: any = { updatedAt: new Date() };
 
     for (const field of allowedFields) {

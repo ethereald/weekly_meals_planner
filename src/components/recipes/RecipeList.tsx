@@ -112,9 +112,31 @@ function RecipeCard({ recipe, onEdit, onDelete }: RecipeCardProps) {
               {recipe.name}
             </h3>
             <div className="flex items-center gap-2 mt-1">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                {recipe.mealType}
-              </span>
+              {/* Tags */}
+              {recipe.tags && recipe.tags.length > 0 ? (
+                recipe.tags.slice(0, 2).map((tag) => (
+                  <span 
+                    key={tag.id}
+                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                    style={{ 
+                      backgroundColor: `${tag.color}20`,
+                      color: tag.color,
+                      borderColor: `${tag.color}40`
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                ))
+              ) : (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                  Untagged
+                </span>
+              )}
+              {recipe.tags && recipe.tags.length > 2 && (
+                <span className="text-xs text-gray-400">
+                  +{recipe.tags.length - 2} more
+                </span>
+              )}
               {recipe.calories && (
                 <span className="text-xs text-gray-500">
                   {recipe.calories} cal
@@ -161,12 +183,12 @@ function RecipeCard({ recipe, onEdit, onDelete }: RecipeCardProps) {
 
         {/* Stats */}
         <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
-          {recipe.prepTime ? (
+          {recipe.cookTime ? (
             <span className="flex items-center gap-1">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {recipe.prepTime} min
+              {recipe.cookTime} min cook
             </span>
           ) : (
             <span></span>

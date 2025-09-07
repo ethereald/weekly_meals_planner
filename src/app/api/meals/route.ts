@@ -21,7 +21,7 @@ async function getHandler(request: AuthenticatedRequest) {
           id: dailyPlannedMeals.id,
           mealId: dailyPlannedMeals.mealId,
           plannedDate: dailyPlannedMeals.plannedDate,
-          plannedTime: dailyPlannedMeals.plannedTime,
+          mealSlot: dailyPlannedMeals.mealSlot,
           servings: dailyPlannedMeals.servings,
           notes: dailyPlannedMeals.notes,
           meal: meals,
@@ -43,7 +43,7 @@ async function getHandler(request: AuthenticatedRequest) {
           id: dailyPlannedMeals.id,
           mealId: dailyPlannedMeals.mealId,
           plannedDate: dailyPlannedMeals.plannedDate,
-          plannedTime: dailyPlannedMeals.plannedTime,
+          mealSlot: dailyPlannedMeals.mealSlot,
           servings: dailyPlannedMeals.servings,
           notes: dailyPlannedMeals.notes,
           meal: meals,
@@ -92,9 +92,9 @@ async function postHandler(request: AuthenticatedRequest) {
     const userId = request.user!.userId;
 
     const body = await request.json();
-    const { name, category, time, plannedDate, description, calories, prepTime } = body;
+    const { name, category, time, plannedDate, description, calories, cookTime } = body;
 
-    if (!name || !category || !plannedDate) {
+    if (!name || !plannedDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -118,9 +118,8 @@ async function postHandler(request: AuthenticatedRequest) {
           userId,
           name,
           description: description || null,
-          mealType: category,
           calories: calories || null,
-          prepTime: prepTime || null,
+          cookTime: cookTime || null,
         })
         .returning();
 
@@ -134,7 +133,7 @@ async function postHandler(request: AuthenticatedRequest) {
         userId,
         mealId,
         plannedDate,
-        plannedTime: time || null,
+        mealSlot: time || null,
       })
       .returning();
 
@@ -144,7 +143,7 @@ async function postHandler(request: AuthenticatedRequest) {
         id: dailyPlannedMeals.id,
         mealId: dailyPlannedMeals.mealId,
         plannedDate: dailyPlannedMeals.plannedDate,
-        plannedTime: dailyPlannedMeals.plannedTime,
+        mealSlot: dailyPlannedMeals.mealSlot,
         servings: dailyPlannedMeals.servings,
         notes: dailyPlannedMeals.notes,
         meal: meals,

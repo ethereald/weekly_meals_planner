@@ -93,7 +93,7 @@ export default function MonthlyView({
     // Filter meals by the specific date and enabled categories
     return meals.filter(meal => {
       // Check if meal category is enabled
-      const mealCategory = meal.meal?.mealType || meal.category;
+      const mealCategory = meal.meal?.tags?.[0]?.name || meal.category;
       const isCategoryEnabled = userSettings?.enabledMealCategories.includes(mealCategory);
       
       if (!isCategoryEnabled) {

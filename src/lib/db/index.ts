@@ -77,7 +77,9 @@ export const {
   shoppingLists,
   shoppingListItems,
   userSettings,
-  nutritionalGoals
+  nutritionalGoals,
+  tags,
+  mealTags
 } = schema;
 
 // Database initialization and health check

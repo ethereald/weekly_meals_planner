@@ -69,7 +69,7 @@ export default function DailyView({
     const testMeal = meals[0]; // Get the first meal
     if (!testMeal) return "No meals to test";
     
-    const mealCategory = testMeal.meal?.mealType || testMeal.category;
+    const mealCategory = testMeal.meal?.tags?.[0]?.name || testMeal.category;
     const categoryMatch = mealCategory === 'dinner';
     
     if (testMeal.plannedDate) {
@@ -104,7 +104,7 @@ export default function DailyView({
     }
     
     const filteredMeals = meals.filter(meal => {
-      const mealCategory = meal.meal?.mealType || meal.category;
+      const mealCategory = meal.meal?.tags?.[0]?.name || meal.category;
       
       console.log('🔍 Filtering meal:', {
         mealName: meal.name,
@@ -203,7 +203,7 @@ export default function DailyView({
             <strong>Meals data:</strong> {JSON.stringify(meals.map(m => ({
               name: m.name,
               category: m.category,
-              mealType: m.meal?.mealType,
+              tags: m.meal?.tags?.map(t => t.name),
               plannedDate: m.plannedDate
             })), null, 2)}
             <br />

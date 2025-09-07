@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, context: Context) {
     const plannedMealsData = await db
       .select({
         plannedDate: dailyPlannedMeals.plannedDate,
-        plannedTime: dailyPlannedMeals.plannedTime,
+        mealSlot: dailyPlannedMeals.mealSlot,
       })
       .from(dailyPlannedMeals)
       .where(eq(dailyPlannedMeals.mealId, mealId));

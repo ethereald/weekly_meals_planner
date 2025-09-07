@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, users, isDatabaseAvailable, initializeDatabase } from '@/lib/db';
 import { hashPassword, validateUsername, validatePassword, generateToken } from '@/lib/auth';
 import { getUserByUsername, createDefaultUserSettings } from '@/lib/db/utils';
+import { sql } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,11 +56,18 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
+    // Check if this is the first user (should be admin)
+    const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const isFirstUser = userCount[0]?.count === 0;
+    
+    // Set role: first user becomes admin, others become regular users
+    const userRole = isFirstUser ? 'admin' : 'user';
+
     // Create user
     const [newUser] = await db.insert(users).values({
       username,
       password: hashedPassword,
-      role: 'user', // Default role for new registrations
+      role: userRole,
     }).returning({
       id: users.id,
       username: users.username,

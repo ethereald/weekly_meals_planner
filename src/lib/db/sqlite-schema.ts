@@ -36,6 +36,22 @@ export const categories = sqliteTable('categories', {
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
 });
 
+// Tags Table
+export const tags = sqliteTable('tags', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name', { length: 50 }).notNull().unique(),
+  color: text('color', { length: 7 }).default('#6B7280'), // Hex color code
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+});
+
+// Meal Tags Junction Table
+export const mealTags = sqliteTable('meal_tags', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  mealId: text('meal_id').notNull().references(() => meals.id, { onDelete: 'cascade' }),
+  tagId: text('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+});
+
 // Meals Table
 export const meals = sqliteTable('meals', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -43,12 +59,9 @@ export const meals = sqliteTable('meals', {
   name: text('name', { length: 255 }).notNull(),
   description: text('description'),
   instructions: text('instructions'),
-  prepTime: integer('prep_time'), // in minutes
   cookTime: integer('cook_time'), // in minutes
-  totalTime: integer('total_time'), // in minutes
   servings: integer('servings').default(2),
   difficulty: text('difficulty', { length: 20 }).default('easy'), // easy, medium, hard
-  mealType: text('meal_type', { length: 20 }).notNull(), // breakfast, lunch, dinner, snack, dessert
   categoryId: text('category_id').references(() => categories.id),
   imageUrl: text('image_url'),
   sourceUrl: text('source_url'),
@@ -59,6 +72,8 @@ export const meals = sqliteTable('meals', {
   fiber: real('fiber'), // grams
   sugar: real('sugar'), // grams
   sodium: real('sodium'), // milligrams
+  isPublic: integer('is_public', { mode: 'boolean' }).default(false),
+  isFavorite: integer('is_favorite', { mode: 'boolean' }).default(false),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').$defaultFn(() => new Date().toISOString()),
 });
@@ -103,7 +118,7 @@ export const plannedMeals = sqliteTable('planned_meals', {
   mealPlanId: text('meal_plan_id').notNull().references(() => weeklyMealPlans.id, { onDelete: 'cascade' }),
   mealId: text('meal_id').notNull().references(() => meals.id),
   dayOfWeek: integer('day_of_week').notNull(), // 0 = Sunday, 1 = Monday, etc.
-  mealTime: text('meal_time', { length: 20 }).notNull(), // breakfast, lunch, dinner, snack
+  mealSlot: text('meal_slot', { length: 50 }), // e.g., "breakfast", "lunch", "dinner", "snack", or custom
   servings: integer('servings').default(2),
   notes: text('notes'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
@@ -115,7 +130,7 @@ export const dailyPlannedMeals = sqliteTable('daily_planned_meals', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   mealId: text('meal_id').notNull().references(() => meals.id),
   plannedDate: text('planned_date').notNull(), // ISO date string (YYYY-MM-DD)
-  plannedTime: text('planned_time', { length: 20 }), // breakfast, lunch, dinner, snack
+  mealSlot: text('meal_slot', { length: 50 }), // e.g., "breakfast", "lunch", "dinner", "snack", or custom
   servings: integer('servings').default(2),
   notes: text('notes'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
@@ -193,6 +208,22 @@ export const mealsRelations = relations(meals, ({ one, many }) => ({
   ingredients: many(mealIngredients),
   plannedMeals: many(plannedMeals),
   dailyPlannedMeals: many(dailyPlannedMeals),
+  mealTags: many(mealTags),
+}));
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  mealTags: many(mealTags),
+}));
+
+export const mealTagsRelations = relations(mealTags, ({ one }) => ({
+  meal: one(meals, {
+    fields: [mealTags.mealId],
+    references: [meals.id],
+  }),
+  tag: one(tags, {
+    fields: [mealTags.tagId],
+    references: [tags.id],
+  }),
 }));
 
 export const mealIngredientsRelations = relations(mealIngredients, ({ one }) => ({

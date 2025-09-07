@@ -75,7 +75,7 @@ export default function WeeklyView({
     }
     
     return meals.filter(meal => {
-      const mealCategory = meal.meal?.mealType || meal.category;
+      const mealCategory = meal.meal?.tags?.[0]?.name || meal.category;
       // Filter by both date and category
       if (meal.plannedDate) {
         // Fix date parsing - create date in local timezone

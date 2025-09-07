@@ -87,7 +87,8 @@ export default function MealFormModal({
 
   // Filter meals by current category for better UX
   const filteredMeals = savedMeals.filter(meal => 
-    meal.mealType === formData.category
+    meal.tags?.some(tag => tag.name.toLowerCase() === formData.category.toLowerCase()) || 
+    (!meal.tags || meal.tags.length === 0) // Include meals without tags as fallback
   );
 
   return (

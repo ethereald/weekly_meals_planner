@@ -14,12 +14,19 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    mealType: '',
     calories: '',
-    prepTime: '',
+    cookTime: '',
   });
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<string[]>(['']);
   const [saving, setSaving] = useState(false);
+
+  // Available tag options
+  const availableTags = [
+    'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 'Beverage',
+    'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Low-Carb',
+    'High-Protein', 'Quick', 'Easy', 'Healthy', 'Comfort Food'
+  ];
 
   // Reset form when recipe changes
   useEffect(() => {
@@ -27,10 +34,11 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
       setFormData({
         name: recipe.name || '',
         description: recipe.description || '',
-        mealType: recipe.mealType || '',
         calories: recipe.calories?.toString() || '',
-        prepTime: recipe.prepTime?.toString() || '',
+        cookTime: recipe.cookTime?.toString() || '',
       });
+      // Set selected tags from recipe
+      setSelectedTags(recipe.tags?.map(tag => tag.name) || []);
       // For now, we'll start with empty ingredients since we don't have that data structure yet
       setIngredients(['']);
     }
@@ -41,6 +49,14 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
       ...prev,
       [field]: value
     }));
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
   };
 
   const handleIngredientChange = (index: number, value: string) => {
@@ -68,9 +84,9 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
       const updates: Partial<SavedMeal> = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
-        mealType: formData.mealType,
         calories: formData.calories ? parseInt(formData.calories) : null,
-        prepTime: formData.prepTime ? parseInt(formData.prepTime) : null,
+        cookTime: formData.cookTime ? parseInt(formData.cookTime) : null,
+        // Tags will be handled separately in the future when we implement tag management
       };
 
       await onSave(updates);
@@ -129,23 +145,43 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Meal Type *
+                    Cook Time (minutes)
                   </label>
-                  <select
-                    value={formData.mealType}
-                    onChange={(e) => handleInputChange('mealType', e.target.value)}
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.cookTime}
+                    onChange={(e) => handleInputChange('cookTime', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Select category</option>
-                    <option value="Breakfast">Breakfast</option>
-                    <option value="Lunch">Lunch</option>
-                    <option value="Dinner">Dinner</option>
-                    <option value="Snack">Snack</option>
-                    <option value="Dessert">Dessert</option>
-                    <option value="Beverage">Beverage</option>
-                  </select>
+                    placeholder="e.g. 30"
+                  />
                 </div>
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                        selectedTags.includes(tag)
+                          ? 'bg-blue-100 border-blue-300 text-blue-800'
+                          : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Select tags to categorize your recipe
+                </p>
               </div>
 
               {/* Nutrition Info */}
@@ -164,18 +200,10 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prep Time (minutes)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.prepTime}
-                    onChange={(e) => handleInputChange('prepTime', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="e.g. 30"
-                  />
+                <div className="flex items-end">
+                  <div className="text-sm text-gray-500">
+                    Additional nutrition info can be added in future updates
+                  </div>
                 </div>
               </div>
 
@@ -248,7 +276,7 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
               </button>
               <button
                 type="submit"
-                disabled={saving || !formData.name.trim() || !formData.mealType}
+                disabled={saving || !formData.name.trim()}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? 'Saving...' : 'Save Changes'}

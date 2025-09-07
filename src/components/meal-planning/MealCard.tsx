@@ -11,18 +11,22 @@ export interface Meal {
   category: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   time?: string;
   calories?: number;
-  prepTime?: number;
+  cookTime?: number;
   plannedDate?: string;
   meal?: {
     id: string;
     userId: string;
     name: string;
     description: string | null;
-    mealType: string;
     calories: number | null;
-    prepTime: number | null;
+    cookTime: number | null;
     createdAt: string;
     updatedAt: string;
+    tags?: Array<{
+      id: string;
+      name: string;
+      color: string;
+    }>;
   };
   addedBy?: {
     userId: string;
@@ -63,9 +67,31 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(meal.meal?.mealType || meal.category)}`}>
-              {meal.meal?.mealType || meal.category}
-            </span>
+            {/* Display tags or fallback to category */}
+            {meal.meal?.tags && meal.meal.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {meal.meal.tags.slice(0, 2).map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border"
+                    style={{
+                      backgroundColor: `${tag.color}20`,
+                      borderColor: `${tag.color}40`,
+                      color: tag.color
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+                {meal.meal.tags.length > 2 && (
+                  <span className="text-xs text-gray-500">+{meal.meal.tags.length - 2}</span>
+                )}
+              </div>
+            ) : (
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(meal.category)}`}>
+                {meal.category}
+              </span>
+            )}
             {meal.time && (
               <span className="text-xs text-gray-500">{meal.time}</span>
             )}
@@ -81,7 +107,7 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
             </p>
           )}
           
-          {((meal.meal?.calories || meal.calories) || (meal.meal?.prepTime || meal.prepTime)) && (
+          {((meal.meal?.calories || meal.calories) || (meal.meal?.cookTime || meal.cookTime)) && (
             <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
               {(meal.meal?.calories || meal.calories) && (
                 <span className="flex items-center gap-1">
@@ -91,12 +117,12 @@ export default function MealCard({ meal, onEdit, onDelete, compact = false }: Me
                   {meal.meal?.calories || meal.calories} cal
                 </span>
               )}
-              {(meal.meal?.prepTime || meal.prepTime) && (
+              {(meal.meal?.cookTime || meal.cookTime) && (
                 <span className="flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {meal.meal?.prepTime || meal.prepTime}m
+                  {meal.meal?.cookTime || meal.cookTime}m
                 </span>
               )}
             </div>

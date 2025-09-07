@@ -12,7 +12,7 @@ CREATE TABLE `daily_planned_meals` (
 	`user_id` text NOT NULL,
 	`meal_id` text NOT NULL,
 	`planned_date` text NOT NULL,
-	`planned_time` text(20),
+	`meal_slot` text(50),
 	`servings` integer DEFAULT 2,
 	`notes` text,
 	`created_at` text,
@@ -44,18 +44,24 @@ CREATE TABLE `meal_ingredients` (
 	FOREIGN KEY (`ingredient_id`) REFERENCES `ingredients`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE TABLE `meal_tags` (
+	`id` text PRIMARY KEY NOT NULL,
+	`meal_id` text NOT NULL,
+	`tag_id` text NOT NULL,
+	`created_at` text,
+	FOREIGN KEY (`meal_id`) REFERENCES `meals`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
 CREATE TABLE `meals` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`name` text(255) NOT NULL,
 	`description` text,
 	`instructions` text,
-	`prep_time` integer,
 	`cook_time` integer,
-	`total_time` integer,
 	`servings` integer DEFAULT 2,
 	`difficulty` text(20) DEFAULT 'easy',
-	`meal_type` text(20) NOT NULL,
 	`category_id` text,
 	`image_url` text,
 	`source_url` text,
@@ -66,6 +72,8 @@ CREATE TABLE `meals` (
 	`fiber` real,
 	`sugar` real,
 	`sodium` real,
+	`is_public` integer DEFAULT false,
+	`is_favorite` integer DEFAULT false,
 	`created_at` text,
 	`updated_at` text,
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
@@ -92,7 +100,7 @@ CREATE TABLE `planned_meals` (
 	`meal_plan_id` text NOT NULL,
 	`meal_id` text NOT NULL,
 	`day_of_week` integer NOT NULL,
-	`meal_time` text(20) NOT NULL,
+	`meal_slot` text(50),
 	`servings` integer DEFAULT 2,
 	`notes` text,
 	`created_at` text,
@@ -128,11 +136,20 @@ CREATE TABLE `shopping_lists` (
 	FOREIGN KEY (`meal_plan_id`) REFERENCES `weekly_meal_plans`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE TABLE `tags` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text(50) NOT NULL,
+	`color` text(7) DEFAULT '#6B7280',
+	`created_at` text
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `tags_name_unique` ON `tags` (`name`);--> statement-breakpoint
 CREATE TABLE `user_settings` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`dietary_restrictions` text,
 	`preferred_meal_times` text,
+	`enabled_meal_categories` text DEFAULT '["breakfast","lunch","dinner","snack"]',
 	`weekly_meal_goal` integer DEFAULT 21,
 	`serving_size` integer DEFAULT 2,
 	`budget_range` real,
@@ -147,6 +164,7 @@ CREATE TABLE `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`username` text(255) NOT NULL,
 	`password` text(255) NOT NULL,
+	`role` text(50) DEFAULT 'user' NOT NULL,
 	`created_at` text,
 	`updated_at` text
 );

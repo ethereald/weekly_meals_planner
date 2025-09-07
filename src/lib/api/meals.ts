@@ -1,10 +1,16 @@
 // API functions for meal management
 
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface PlannedMeal {
   id: string;
   mealId: string;
   plannedDate: string;
-  plannedTime: string | null;
+  mealSlot: string | null;
   servings: number;
   notes: string | null;
   meal: {
@@ -12,9 +18,9 @@ export interface PlannedMeal {
     userId: string;
     name: string;
     description: string | null;
-    mealType: string;
     calories: number | null;
-    prepTime: number | null;
+    cookTime: number | null;
+    tags?: Tag[];
     createdAt: string;
     updatedAt: string;
   };
@@ -29,9 +35,9 @@ export interface SavedMeal {
   userId: string;
   name: string;
   description: string | null;
-  mealType: string;
   calories: number | null;
-  prepTime: number | null;
+  cookTime: number | null;
+  tags?: Tag[];
   createdAt: string;
   updatedAt: string;
 }
@@ -125,7 +131,7 @@ export const mealsApi = {
     plannedDate: string;
     description?: string;
     calories?: number;
-    prepTime?: number;
+    cookTime?: number;
   }): Promise<PlannedMeal | null> {
     try {
       const response = await fetch('/api/meals', {

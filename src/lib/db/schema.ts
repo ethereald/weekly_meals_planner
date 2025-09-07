@@ -15,19 +15,27 @@ export const dietaryRestrictionEnum = pgEnum('dietary_restriction', [
   'diabetic'
 ]);
 
-export const mealTypeEnum = pgEnum('meal_type', [
-  'breakfast',
-  'lunch',
-  'dinner',
-  'snack',
-  'dessert'
-]);
-
 export const difficultyEnum = pgEnum('difficulty', [
   'easy',
   'medium',
   'hard'
 ]);
+
+// Tags Table
+export const tags = pgTable('tags', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 50 }).notNull().unique(),
+  color: varchar('color', { length: 7 }).default('#6B7280'), // Hex color code
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Meal Tags Junction Table
+export const mealTags = pgTable('meal_tags', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  mealId: uuid('meal_id').notNull().references(() => meals.id, { onDelete: 'cascade' }),
+  tagId: uuid('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow(),
+});
 
 // Users Table
 export const users = pgTable('users', {
@@ -71,9 +79,7 @@ export const meals = pgTable('meals', {
   categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
-  mealType: mealTypeEnum('meal_type').notNull(),
   difficulty: difficultyEnum('difficulty').default('easy'),
-  prepTime: integer('prep_time'), // in minutes
   cookTime: integer('cook_time'), // in minutes
   servings: integer('servings').default(2),
   calories: integer('calories'),
@@ -135,7 +141,7 @@ export const plannedMeals = pgTable('planned_meals', {
   weeklyMealPlanId: uuid('weekly_meal_plan_id').notNull().references(() => weeklyMealPlans.id, { onDelete: 'cascade' }),
   mealId: uuid('meal_id').notNull().references(() => meals.id, { onDelete: 'cascade' }),
   plannedDate: timestamp('planned_date').notNull(),
-  mealType: mealTypeEnum('meal_type').notNull(),
+  mealSlot: varchar('meal_slot', { length: 50 }), // e.g., "breakfast", "lunch", "dinner", "snack", or custom
   servings: integer('servings').default(2),
   isCompleted: boolean('is_completed').default(false),
   notes: text('notes'),
@@ -214,6 +220,22 @@ export const mealsRelations = relations(meals, ({ one, many }) => ({
   }),
   mealIngredients: many(mealIngredients),
   plannedMeals: many(plannedMeals),
+  mealTags: many(mealTags),
+}));
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  mealTags: many(mealTags),
+}));
+
+export const mealTagsRelations = relations(mealTags, ({ one }) => ({
+  meal: one(meals, {
+    fields: [mealTags.mealId],
+    references: [meals.id],
+  }),
+  tag: one(tags, {
+    fields: [mealTags.tagId],
+    references: [tags.id],
+  }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({

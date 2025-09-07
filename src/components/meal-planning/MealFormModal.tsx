@@ -35,6 +35,8 @@ export default function MealFormModal({
 
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [isLoadingMeals, setIsLoadingMeals] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showTagFilter, setShowTagFilter] = useState(false);
 
   // Get enabled categories from user settings
   const enabledCategories = userSettings?.enabledMealCategories || ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -78,6 +80,31 @@ export default function MealFormModal({
     }
   }, [editingMeal, selectedCategory, singleCategory, enabledCategories]);
 
+  // Get all unique tags from saved meals
+  const getAllTags = () => {
+    const tagMap = new Map();
+    savedMeals.forEach(meal => {
+      if (meal.tags) {
+        meal.tags.forEach(tag => {
+          tagMap.set(tag.id, tag);
+        });
+      }
+    });
+    return Array.from(tagMap.values());
+  };
+
+  const handleTagToggle = (tagId: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
+  const clearTagFilters = () => {
+    setSelectedTags([]);
+  };
+
   const handleMealSelection = (mealId: string) => {
     const selectedMeal = savedMeals.find(meal => meal.id === mealId);
     if (selectedMeal) {
@@ -106,11 +133,23 @@ export default function MealFormModal({
 
   if (!isOpen) return null;
 
-  // Show all saved meals - organize by relevance but don't exclude any
-  const categoryMeals = savedMeals.filter(meal => 
+  // Apply tag filtering first if tags are selected
+  let mealsToFilter = savedMeals;
+  if (selectedTags.length > 0) {
+    mealsToFilter = savedMeals.filter(meal => {
+      if (!meal.tags || meal.tags.length === 0) {
+        return false; // Don't show untagged meals when tags are selected
+      }
+      // Meal must have at least one of the selected tags
+      return meal.tags.some(tag => selectedTags.includes(tag.id));
+    });
+  }
+
+  // Show all filtered meals - organize by relevance but don't exclude any
+  const categoryMeals = mealsToFilter.filter(meal => 
     meal.tags?.some(tag => tag.name.toLowerCase() === formData.category.toLowerCase())
   );
-  const otherMeals = savedMeals.filter(meal => 
+  const otherMeals = mealsToFilter.filter(meal => 
     !meal.tags?.some(tag => tag.name.toLowerCase() === formData.category.toLowerCase())
   );
   
@@ -172,38 +211,134 @@ export default function MealFormModal({
               </div>
             )}
 
-            {!isLoadingMeals && filteredMeals.length > 0 && (
-              <div>
-                <label htmlFor="savedMeal" className="block text-sm font-medium text-gray-700 mb-1">
-                  Select from saved meals
-                </label>
-                <select
-                  id="savedMeal"
-                  value={formData.selectedMealId}
-                  onChange={(e) => handleMealSelection(e.target.value)}
-                  className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
-                >
-                  <option value="">Choose a saved meal...</option>
-                  {categoryMeals.length > 0 && (
-                    <optgroup label={`${formData.category.charAt(0).toUpperCase() + formData.category.slice(1)} meals`}>
-                      {categoryMeals.map((meal) => (
-                        <option key={meal.id} value={meal.id}>
-                          {meal.name}
-                        </option>
+            {/* Tag Filter Section */}
+            {!isLoadingMeals && savedMeals.length > 0 && getAllTags().length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Filter by tags
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowTagFilter(!showTagFilter)}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                  >
+                    <svg className={`w-3 h-3 transition-transform ${showTagFilter ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                    {showTagFilter ? 'Hide' : 'Show'} filters
+                  </button>
+                </div>
+                
+                {showTagFilter && (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-1">
+                      {getAllTags().slice(0, 6).map(tag => (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => handleTagToggle(tag.id)}
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border transition-colors ${
+                            selectedTags.includes(tag.id)
+                              ? 'border-2 shadow-sm'
+                              : 'border hover:shadow-sm'
+                          }`}
+                          style={{
+                            backgroundColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}20`,
+                            borderColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}60`,
+                            color: selectedTags.includes(tag.id) ? 'white' : tag.color
+                          }}
+                        >
+                          {tag.name}
+                          {selectedTags.includes(tag.id) && (
+                            <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
                       ))}
-                    </optgroup>
-                  )}
-                  {otherMeals.length > 0 && (
-                    <optgroup label="Other meals">
-                      {otherMeals.map((meal) => (
-                        <option key={meal.id} value={meal.id}>
-                          {meal.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
+                      {getAllTags().length > 6 && (
+                        <span className="text-xs text-gray-500 px-2 py-1">
+                          +{getAllTags().length - 6} more
+                        </span>
+                      )}
+                    </div>
+                    
+                    {selectedTags.length > 0 && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-600">
+                          {filteredMeals.length} of {savedMeals.length} meals
+                        </span>
+                        <button
+                          type="button"
+                          onClick={clearTagFilters}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Clear filters
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+            )}
+
+            {!isLoadingMeals && (
+              <>
+                {filteredMeals.length > 0 ? (
+                  <div>
+                    <label htmlFor="savedMeal" className="block text-sm font-medium text-gray-700 mb-1">
+                      Select from saved meals
+                    </label>
+                    <select
+                      id="savedMeal"
+                      value={formData.selectedMealId}
+                      onChange={(e) => handleMealSelection(e.target.value)}
+                      className="w-full px-2 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 box-border"
+                    >
+                      <option value="">Choose a saved meal...</option>
+                      {categoryMeals.length > 0 && (
+                        <optgroup label={`${formData.category.charAt(0).toUpperCase() + formData.category.slice(1)} meals`}>
+                          {categoryMeals.map((meal) => (
+                            <option key={meal.id} value={meal.id}>
+                              {meal.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {otherMeals.length > 0 && (
+                        <optgroup label="Other meals">
+                          {otherMeals.map((meal) => (
+                            <option key={meal.id} value={meal.id}>
+                              {meal.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    {selectedTags.length > 0 ? (
+                      <div>
+                        <p>No meals found with the selected tags.</p>
+                        <button
+                          type="button"
+                          onClick={clearTagFilters}
+                          className="mt-2 text-blue-600 hover:text-blue-800 underline text-sm"
+                        >
+                          Clear tag filters
+                        </button>
+                      </div>
+                    ) : (
+                      <p>No saved meals available. Add some recipes to the database first!</p>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
             <div>

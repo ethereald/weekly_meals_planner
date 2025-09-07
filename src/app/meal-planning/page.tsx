@@ -32,8 +32,8 @@ function MealPlanningContent() {
   // Check if debug mode is enabled via URL parameter
   const isDebugMode = searchParams.get('debug') === 'true';
   
-  // Get current view from URL parameter, default to 'daily'
-  const view = (searchParams.get('view') as 'daily' | 'weekly' | 'monthly') || 'daily';
+  // Get current view from URL parameter, default to 'weekly'
+  const view = (searchParams.get('view') as 'daily' | 'weekly' | 'monthly') || 'weekly';
 
   // Load user and initialize data
   useEffect(() => {
@@ -48,8 +48,14 @@ function MealPlanningContent() {
         const savedMealsData = await mealsApi.getUserSavedMeals();
         setSavedMeals(savedMealsData);
 
-        // Load planned meals for current date
-        await loadPlannedMeals(currentDate);
+        // Load planned meals based on current view
+        const dateRange = getDateRange(currentDate, view);
+        if (view === 'daily') {
+          await loadPlannedMeals(currentDate);
+        } else {
+          console.log('📅 Initial loading date range for', view, 'view:', format(dateRange.start, 'yyyy-MM-dd'), 'to', format(dateRange.end, 'yyyy-MM-dd'));
+          await loadPlannedMeals(currentDate, dateRange);
+        }
       } catch (error) {
         console.error('Failed to load user data:', error);
         // Redirect to login if auth fails

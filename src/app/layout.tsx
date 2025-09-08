@@ -43,14 +43,15 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
       { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/icons/icon.svg", sizes: "32x32", type: "image/svg+xml" },
-      { url: "/icons/icon.svg", sizes: "16x16", type: "image/svg+xml" },
     ],
     apple: [
-      { url: "/apple-touch-icon.svg", sizes: "180x180", type: "image/svg+xml" },
-      { url: "/apple-touch-icon.svg", sizes: "152x152", type: "image/svg+xml" },
-      { url: "/apple-touch-icon.svg", sizes: "120x120", type: "image/svg+xml" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/icon-144x144.png", sizes: "144x144", type: "image/png" },
     ],
     other: [
       {
@@ -95,7 +96,12 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="format-detection" content="telephone=no" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="shortcut icon" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+        <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

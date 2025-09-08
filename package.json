@@ -14,7 +14,8 @@
     "db:seed": "tsx src/lib/db/seed.ts",
     "admin:migrate": "tsx scripts/migrate-add-role.ts",
     "admin:seed": "tsx scripts/seed-admin.ts",
-    "update:tag-colors": "tsx scripts/update-tag-colors.ts"
+    "update:tag-colors": "tsx scripts/update-tag-colors.ts",
+    "migrate:add-theme": "tsx scripts/add-theme-column.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.14",

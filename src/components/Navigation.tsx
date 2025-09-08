@@ -39,7 +39,7 @@ export default function Navigation() {
         ] : []),
         { href: '/account', label: 'Account', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
       ] : [
-        { href: '/auth', label: 'Login', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+        { href: '/account', label: 'Login', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
       ])
     ];
   };
@@ -184,7 +184,7 @@ export default function Navigation() {
           ) : (
             <div className="hidden md:flex items-center">
               <Link
-                href="/auth"
+                href="/account"
                 className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,7 +270,7 @@ export default function Navigation() {
                   </div>
                 ) : (
                   <Link
-                    href="/auth"
+                    href="/account"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                   >

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navigation from "../components/Navigation";
 import { AuthProvider } from "../contexts/AuthContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
 import PWARegistration from "../components/PWARegistration";
 
 const geistSans = Geist({
@@ -80,7 +81,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="theme-light">{/* Default theme to prevent flash */}
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
         <meta name="theme-color" content="#3B82F6" />
@@ -100,9 +101,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Navigation />
-          {children}
-          <PWARegistration />
+          <ThemeProvider>
+            <Navigation />
+            {children}
+            <PWARegistration />
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

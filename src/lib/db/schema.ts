@@ -59,6 +59,7 @@ export const userSettings = pgTable('user_settings', {
   servingSize: integer('serving_size').default(2), // Default serving size
   budgetRange: decimal('budget_range', { precision: 10, scale: 2 }), // Weekly budget
   shoppingDay: varchar('shopping_day', { length: 20 }).default('sunday'), // Preferred shopping day
+  theme: varchar('theme', { length: 20 }).default('light'), // UI theme preference
   notificationsEnabled: boolean('notifications_enabled').default(true),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

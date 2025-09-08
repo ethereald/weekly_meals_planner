@@ -140,6 +140,6 @@ export const authApi = {
       throw new Error(data.message || 'Failed to get user settings');
     }
 
-    return data;
+    return data.settings || data; // Handle both new and old response formats
   },
 };

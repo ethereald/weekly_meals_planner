@@ -207,12 +207,12 @@ export default function WeeklyView({
 
   // Filter meal categories based on user settings
   const mealCategories = allMealCategories.filter(category => 
-    userSettings?.enabledMealCategories.includes(category.key)
+    userSettings?.enabledMealCategories?.includes(category.key) ?? true
   );
 
   const getMealsForDateAndCategory = (date: Date, category: string) => {
     // Check if category is enabled
-    if (!userSettings?.enabledMealCategories.includes(category)) {
+    if (!userSettings?.enabledMealCategories?.includes(category)) {
       return [];
     }
     

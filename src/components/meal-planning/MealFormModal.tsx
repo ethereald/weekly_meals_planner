@@ -78,7 +78,20 @@ export default function MealFormModal({
         notes: ''
       });
     }
-  }, [editingMeal, selectedCategory, singleCategory, enabledCategories]);
+  }, [editingMeal, selectedCategory, singleCategory, categoryOptions]);
+
+  // Reset form when modal opens for a new meal
+  useEffect(() => {
+    if (isOpen && !editingMeal) {
+      const defaultCategory = singleCategory || selectedCategory || categoryOptions[0]?.value || 'breakfast';
+      setFormData({
+        name: '',
+        category: defaultCategory as 'breakfast' | 'lunch' | 'dinner' | 'snack',
+        selectedMealId: '',
+        notes: ''
+      });
+    }
+  }, [isOpen]);
 
   // Get all unique tags from saved meals
   const getAllTags = () => {

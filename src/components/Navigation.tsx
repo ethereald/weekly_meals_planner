@@ -67,18 +67,32 @@ export default function Navigation() {
   if (isLoading) {
     return (
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    {/* Plate Base - much larger white circle */}
+                    <circle cx="12" cy="12" r="9" fill="white" stroke="#e5e7eb" strokeWidth="0.5"/>
+                    
+                    {/* Food Items - colorful dots on the plate */}
+                    <circle cx="9" cy="10" r="1.5" fill="#fbbf24"/>
+                    <circle cx="15" cy="9.5" r="1.2" fill="#34d399"/>
+                    <circle cx="13" cy="14" r="1" fill="#f87171"/>
+                    <circle cx="10" cy="14.5" r="0.8" fill="#8b5cf6"/>
+                    
+                    {/* Simple fork and knife on the side */}
+                    <rect x="4" y="8" width="0.5" height="8" fill="white"/>
+                    <rect x="3.5" y="8" width="1.5" height="1" fill="white"/>
+                    
+                    <rect x="19.5" y="8" width="0.5" height="8" fill="white"/>
+                    <rect x="19" y="8" width="1.5" height="3" fill="white"/>
+                  </svg>
+                </div>
+                <span className="text-xl font-bold text-gray-900">MealPlanner</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">MealPlanner</span>
             </div>
           </div>
-        </div>
       </nav>
     );
   }
@@ -90,8 +104,22 @@ export default function Navigation() {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  {/* Plate Base - much larger white circle */}
+                  <circle cx="12" cy="12" r="9" fill="white" stroke="#e5e7eb" strokeWidth="0.5"/>
+                  
+                  {/* Food Items - colorful dots on the plate */}
+                  <circle cx="9" cy="10" r="1.5" fill="#fbbf24"/>
+                  <circle cx="15" cy="9.5" r="1.2" fill="#34d399"/>
+                  <circle cx="13" cy="14" r="1" fill="#f87171"/>
+                  <circle cx="10" cy="14.5" r="0.8" fill="#8b5cf6"/>
+                  
+                  {/* Simple fork and knife on the side */}
+                  <rect x="4" y="8" width="0.5" height="8" fill="white"/>
+                  <rect x="3.5" y="8" width="1.5" height="1" fill="white"/>
+                  
+                  <rect x="19.5" y="8" width="0.5" height="8" fill="white"/>
+                  <rect x="19" y="8" width="1.5" height="3" fill="white"/>
                 </svg>
               </div>
               <span className="text-xl font-bold text-gray-900">MealPlanner</span>

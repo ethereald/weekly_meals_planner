@@ -103,18 +103,14 @@ export default function MealCard({ meal, currentUser, onEdit, onDelete, compact 
             {meal.meal?.name || meal.name}
           </h3>
           
-          {(meal.meal?.description || meal.description) && !compact && (
-            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-              {meal.meal?.description || meal.description}
+          {meal.notes && (
+            <p className={`text-gray-600 mt-1 ${
+              compact 
+                ? 'text-xs truncate' // Single line with ellipsis for compact mode
+                : 'text-sm line-clamp-2' // Two lines for full mode
+            }`}>
+              {meal.notes}
             </p>
-          )}
-          
-          {meal.notes && !compact && (
-            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-sm text-blue-800 italic">
-                Note: {meal.notes}
-              </p>
-            </div>
           )}
           
           {((meal.meal?.calories || meal.calories) || (meal.meal?.cookTime || meal.cookTime)) && (

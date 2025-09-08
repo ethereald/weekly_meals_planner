@@ -527,7 +527,14 @@ export default function WeeklyView({
                         
                         {/* Meals */}
                         <div className="p-3 space-y-2 min-h-[100px]">
-                          {dayMeals.map((meal) => (
+                          {dayMeals
+                            .sort((a, b) => {
+                              // Sort meals by username (group by user)
+                              const userA = a.addedBy?.username || '';
+                              const userB = b.addedBy?.username || '';
+                              return userA.localeCompare(userB);
+                            })
+                            .map((meal) => (
                             <div key={meal.id}>
                               <MealCard
                                 meal={meal}

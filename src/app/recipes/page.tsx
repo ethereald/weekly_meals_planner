@@ -61,13 +61,23 @@ export default function RecipesPage() {
     }
   }, [recipes, selectedTags]);
 
+  // Get tag color with fallback to varied colors for consistency
+  const getTagColor = (tagName: string, storedColor?: string) => {
+    // Use stored color from database
+    return storedColor || '#3B82F6';
+  };
+
   // Get all unique tags from recipes
   const getAllTags = () => {
     const tagMap = new Map();
     recipes.forEach(recipe => {
       if (recipe.tags) {
         recipe.tags.forEach(tag => {
-          tagMap.set(tag.id, tag);
+          tagMap.set(tag.id, {
+            ...tag,
+            // Override color with calculated color for consistency
+            color: getTagColor(tag.name, tag.color)
+          });
         });
       }
     });

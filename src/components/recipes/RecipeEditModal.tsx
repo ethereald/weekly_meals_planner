@@ -153,6 +153,7 @@ export default function RecipeEditModal({ isOpen, onClose, recipe, onSave }: Rec
                   Tags
                 </label>
                 <TagInput
+                  key={`tag-input-${isOpen ? recipe?.id || 'new' : 'closed'}`}
                   selectedTags={selectedTags}
                   onTagsChange={setSelectedTags}
                   placeholder="Type to add or select tags..."

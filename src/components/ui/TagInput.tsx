@@ -30,6 +30,10 @@ export default function TagInput({ selectedTags, onTagsChange, placeholder = "Ty
         setLoading(true);
         const response = await fetch('/api/tags', {
           credentials: 'include',
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
         });
         
         if (response.ok) {
@@ -110,28 +114,59 @@ export default function TagInput({ selectedTags, onTagsChange, placeholder = "Ty
     };
   }, []);
 
-  // Get tag color (existing tags have colors, new ones get default)
+  // Get tag color (existing tags have colors, new ones get calculated colors)
   const getTagColor = (tagName: string) => {
     const existingTag = existingTags.find(tag => tag.name === tagName);
-    return existingTag?.color || '#3B82F6';
+    if (existingTag?.color) {
+      return existingTag.color;
+    }
+    
+    // Use the same color calculation logic as the database script
+    const tagColors = [
+      '#DC2626', // red-600 - bright red
+      '#059669', // emerald-600 - green
+      '#D97706', // amber-600 - orange
+      '#7C3AED', // violet-600 - purple
+      '#DB2777', // pink-600 - hot pink
+      '#0891B2', // cyan-600 - cyan
+      '#CA8A04', // yellow-600 - gold
+      '#1D4ED8', // blue-600 - royal blue
+      '#047857', // emerald-700 - dark green
+      '#B91C1C', // red-700 - dark red
+      '#7C2D12', // orange-800 - brown
+      '#6B21A8', // purple-800 - deep purple
+    ];
+    
+    // Simple hash function to consistently assign colors based on tag name
+    let hash = 0;
+    for (let i = 0; i < tagName.length; i++) {
+      hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorIndex = Math.abs(hash) % tagColors.length;
+    return tagColors[colorIndex];
   };
 
   return (
     <div className="relative">
-      <div className="min-h-[42px] w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent bg-white">
-        <div className="flex flex-wrap gap-1 items-center">
+      <div className="w-full px-2 py-1 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent bg-white">
+        <div className="flex flex-wrap gap-2 items-center">{/* Match Recipe Database gap-2 */}
           {/* Selected tags */}
           {selectedTags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-white"
-              style={{ backgroundColor: getTagColor(tag) }}
+              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
+              style={{ 
+                backgroundColor: `${getTagColor(tag)}20`,
+                color: getTagColor(tag),
+                borderColor: `${getTagColor(tag)}60`
+              }}
             >
               {tag}
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
-                className="ml-1 text-white hover:text-gray-200 focus:outline-none"
+                className="ml-1 hover:opacity-70 focus:outline-none"
+                style={{ color: getTagColor(tag) }}
               >
                 ×
               </button>

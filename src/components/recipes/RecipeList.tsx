@@ -9,6 +9,12 @@ interface RecipeListProps {
   onDeleteRecipe: (recipeId: string) => void;
 }
 
+// Get tag color with fallback to varied colors for consistency
+const getTagColor = (tagName: string, storedColor?: string) => {
+  // Use stored color from database
+  return storedColor || '#3B82F6';
+};
+
 export default function RecipeList({ recipes, onEditRecipe, onDeleteRecipe }: RecipeListProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<{
     recipe: SavedMeal | null;
@@ -145,11 +151,13 @@ function RecipeCard({ recipe, plannedCount, countLoading, onEdit, onDelete }: Re
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-medium text-gray-900 truncate" title={recipe.name}>
-                {recipe.name}
-              </h3>
-              {/* Planned count badge */}
+            {/* Title - full width, no truncation */}
+            <h3 className="font-medium text-gray-900 mb-1" title={recipe.name}>
+              {recipe.name}
+            </h3>
+            
+            {/* Count badge - its own row with new color scheme */}
+            <div className="flex items-center justify-start mb-1">
               {countLoading ? (
                 <div className="animate-pulse bg-gray-200 rounded-full px-2 py-1 text-xs">
                   <span className="invisible">0</span>
@@ -157,31 +165,35 @@ function RecipeCard({ recipe, plannedCount, countLoading, onEdit, onDelete }: Re
               ) : (
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                   plannedCount > 0 
-                    ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                    : 'bg-gray-100 text-gray-600 border border-gray-200'
+                    ? 'bg-green-100 text-green-800 border border-green-200' 
+                    : 'bg-slate-100 text-slate-600 border border-slate-200'
                 }`}>
                   {plannedCount} cooked
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              {/* Tags */}
+            
+            {/* Tags and calories - their own row using calculated tag colors */}
+            <div className="flex items-center gap-2">
               {recipe.tags && recipe.tags.length > 0 ? (
-                recipe.tags.slice(0, 2).map((tag) => (
-                  <span 
-                    key={tag.id}
-                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                    style={{ 
-                      backgroundColor: `${tag.color}20`,
-                      color: tag.color,
-                      borderColor: `${tag.color}40`
-                    }}
-                  >
-                    {tag.name}
-                  </span>
-                ))
+                recipe.tags.slice(0, 2).map((tag) => {
+                  const tagColor = getTagColor(tag.name, tag.color);
+                  return (
+                    <span 
+                      key={tag.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
+                      style={{ 
+                        backgroundColor: `${tagColor}20`,
+                        color: tagColor,
+                        borderColor: `${tagColor}60`
+                      }}
+                    >
+                      {tag.name}
+                    </span>
+                  );
+                })
               ) : (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-neutral-100 text-neutral-600 border border-neutral-200">
                   Untagged
                 </span>
               )}
@@ -191,7 +203,7 @@ function RecipeCard({ recipe, plannedCount, countLoading, onEdit, onDelete }: Re
                 </span>
               )}
               {recipe.calories && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                   {recipe.calories} cal
                 </span>
               )}

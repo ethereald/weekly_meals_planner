@@ -97,7 +97,7 @@ export default function AdminPanel() {
     }
 
     try {
-      const response = await fetch('/api/admin/users/create', {
+      const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -80,8 +80,8 @@ export async function PUT(request: NextRequest, context: Context) {
     }
 
     // Prepare update data
-    const updateData: Record<string, string> = {
-      updatedAt: new Date().toISOString(),
+    const updateData: Record<string, any> = {
+      updatedAt: new Date(),
     };
 
     // Update username if provided

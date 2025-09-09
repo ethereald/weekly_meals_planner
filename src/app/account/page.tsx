@@ -25,6 +25,7 @@ const themes: { value: Theme; label: string; description: string }[] = [
   { value: 'ocean', label: 'Ocean', description: 'Calming blue ocean theme' },
   { value: 'forest', label: 'Forest', description: 'Natural green forest theme' },
   { value: 'sunset', label: 'Sunset', description: 'Warm orange sunset theme' },
+  { value: 'pink', label: 'Pink', description: 'Soft and elegant pink theme' },
 ];
 
 export default function AccountPage() {
@@ -382,10 +383,38 @@ export default function AccountPage() {
                     </div>
                     
                     {/* Color preview */}
-                    <div className={`flex gap-1 ${themeOption.value === 'dark' ? 'bg-gray-800' : themeOption.value === 'ocean' ? 'bg-blue-50' : themeOption.value === 'forest' ? 'bg-green-50' : themeOption.value === 'sunset' ? 'bg-orange-50' : 'bg-gray-50'} p-2 rounded`}>
-                      <div className={`w-3 h-3 rounded ${themeOption.value === 'dark' ? 'bg-slate-600' : themeOption.value === 'ocean' ? 'bg-blue-500' : themeOption.value === 'forest' ? 'bg-green-500' : themeOption.value === 'sunset' ? 'bg-orange-500' : 'bg-gray-400'}`}></div>
-                      <div className={`w-3 h-3 rounded ${themeOption.value === 'dark' ? 'bg-blue-400' : themeOption.value === 'ocean' ? 'bg-cyan-400' : themeOption.value === 'forest' ? 'bg-emerald-400' : themeOption.value === 'sunset' ? 'bg-yellow-400' : 'bg-blue-500'}`}></div>
-                      <div className={`w-3 h-3 rounded ${themeOption.value === 'dark' ? 'bg-gray-300' : themeOption.value === 'ocean' ? 'bg-blue-200' : themeOption.value === 'forest' ? 'bg-green-200' : themeOption.value === 'sunset' ? 'bg-orange-200' : 'bg-gray-200'}`}></div>
+                    <div className={`flex gap-1 ${
+                      themeOption.value === 'dark' ? 'bg-gray-800' : 
+                      themeOption.value === 'ocean' ? 'bg-blue-50' : 
+                      themeOption.value === 'forest' ? 'bg-green-50' : 
+                      themeOption.value === 'sunset' ? 'bg-orange-50' : 
+                      themeOption.value === 'pink' ? 'bg-pink-50' : 
+                      'bg-gray-50'
+                    } p-2 rounded`}>
+                      <div className={`w-3 h-3 rounded ${
+                        themeOption.value === 'dark' ? 'bg-slate-600' : 
+                        themeOption.value === 'ocean' ? 'bg-blue-500' : 
+                        themeOption.value === 'forest' ? 'bg-green-500' : 
+                        themeOption.value === 'sunset' ? 'bg-orange-500' : 
+                        themeOption.value === 'pink' ? 'bg-pink-500' : 
+                        'bg-gray-400'
+                      }`}></div>
+                      <div className={`w-3 h-3 rounded ${
+                        themeOption.value === 'dark' ? 'bg-blue-400' : 
+                        themeOption.value === 'ocean' ? 'bg-cyan-400' : 
+                        themeOption.value === 'forest' ? 'bg-emerald-400' : 
+                        themeOption.value === 'sunset' ? 'bg-yellow-400' : 
+                        themeOption.value === 'pink' ? 'bg-rose-400' : 
+                        'bg-blue-500'
+                      }`}></div>
+                      <div className={`w-3 h-3 rounded ${
+                        themeOption.value === 'dark' ? 'bg-gray-300' : 
+                        themeOption.value === 'ocean' ? 'bg-blue-200' : 
+                        themeOption.value === 'forest' ? 'bg-green-200' : 
+                        themeOption.value === 'sunset' ? 'bg-orange-200' : 
+                        themeOption.value === 'pink' ? 'bg-pink-200' : 
+                        'bg-gray-200'
+                      }`}></div>
                     </div>
                   </div>
                 ))}

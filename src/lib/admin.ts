@@ -37,7 +37,7 @@ export async function createAdminUser(): Promise<boolean> {
       // If admin exists but doesn't have admin role, update it
       if (existingAdmin[0].role !== ADMIN_ROLE) {
         await db.update(users)
-          .set({ role: ADMIN_ROLE, updatedAt: new Date().toISOString() })
+          .set({ role: ADMIN_ROLE, updatedAt: new Date() })
           .where(eq(users.id, existingAdmin[0].id));
         console.log('Updated existing admin user role');
       } else {
@@ -85,7 +85,7 @@ export async function getUserWithRole(userId: string) {
 export async function promoteToAdmin(userId: string): Promise<boolean> {
   try {
     await db.update(users)
-      .set({ role: ADMIN_ROLE, updatedAt: new Date().toISOString() })
+      .set({ role: ADMIN_ROLE, updatedAt: new Date() })
       .where(eq(users.id, userId));
     return true;
   } catch (error) {
@@ -98,7 +98,7 @@ export async function promoteToAdmin(userId: string): Promise<boolean> {
 export async function demoteFromAdmin(userId: string): Promise<boolean> {
   try {
     await db.update(users)
-      .set({ role: USER_ROLE, updatedAt: new Date().toISOString() })
+      .set({ role: USER_ROLE, updatedAt: new Date() })
       .where(eq(users.id, userId));
     return true;
   } catch (error) {

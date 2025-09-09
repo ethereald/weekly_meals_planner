@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 
-export type Theme = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset';
+export type Theme = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset' | 'pink';
 
 interface ThemeContextType {
   theme: Theme;
@@ -63,8 +63,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   useEffect(() => {
     if (!isLoading) {
       // Remove all theme classes first
-      document.documentElement.classList.remove('theme-light', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset');
-      document.body.classList.remove('theme-light', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset');
+      document.documentElement.classList.remove('theme-light', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-pink');
+      document.body.classList.remove('theme-light', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-pink');
       
       // Add the current theme class to both html and body
       document.documentElement.classList.add(`theme-${theme}`);

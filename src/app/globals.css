@@ -114,6 +114,25 @@
   --ring: #f59e0b;
 }
 
+/* Pink theme (soft pink background) */
+.theme-pink {
+  --background: #fdf2f8;
+  --foreground: #9d174d;
+  --primary: #ec4899;
+  --primary-foreground: #ffffff;
+  --secondary: #fce7f3;
+  --secondary-foreground: #9d174d;
+  --muted: #fdf2f8;
+  --muted-foreground: #db2777;
+  --accent: #fce7f3;
+  --accent-foreground: #9d174d;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #f9a8d4;
+  --input: #fce7f3;
+  --ring: #ec4899;
+}
+
 /* PWA Styles */
 @media (display-mode: standalone) {
   body {
@@ -329,5 +348,9 @@ input:focus, textarea:focus, select:focus {
 }
 
 .theme-sunset .text-white {
+  color: #ffffff !important;
+}
+
+.theme-pink .text-white {
   color: #ffffff !important;
 }

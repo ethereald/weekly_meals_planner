@@ -75,7 +75,7 @@ export async function PUT(request: NextRequest) {
     const { theme } = body;
 
     // Validate theme value
-    const validThemes = ['light', 'dark', 'ocean', 'forest', 'sunset'];
+    const validThemes = ['light', 'dark', 'ocean', 'forest', 'sunset', 'pink'];
     if (theme && !validThemes.includes(theme)) {
       return NextResponse.json(
         { message: 'Invalid theme value' },

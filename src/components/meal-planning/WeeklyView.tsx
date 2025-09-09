@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import MealCard, { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
+import RemarkIcon from './RemarkIcon';
 import { SavedMeal } from '../../lib/api/meals';
 import { authApi, UserSettings } from '../../lib/auth-client';
 
@@ -34,6 +35,9 @@ export default function WeeklyView({
   const [selectedCategory, setSelectedCategory] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | undefined>();
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(true);
+  
+  // Global refresh trigger for remark icons
+  const [remarkRefreshTrigger, setRemarkRefreshTrigger] = useState(0);
   
   // State for day enable/disable functionality
   const [isEditMode, setIsEditMode] = useState(false);
@@ -256,6 +260,11 @@ export default function WeeklyView({
     }
   };
 
+  // Callback to refresh all remark icons when a remark is changed
+  const handleRemarkChange = () => {
+    setRemarkRefreshTrigger(prev => prev + 1);
+  };
+
   const getDayTotalCalories = (date: Date) => {
     let total = 0;
     mealCategories.forEach(category => {
@@ -409,9 +418,9 @@ export default function WeeklyView({
                 }`}>
                   {format(day, 'EEE')}
                   {isEditMode && (
-                    <span className="ml-1">
-                      {dayEnabled ? '✓' : '✗'}
-                    </span>
+                    <div className="text-center mt-1">
+                      <span>{dayEnabled ? '✓' : '✗'}</span>
+                    </div>
                   )}
                 </div>
                 <div className={`text-base sm:text-lg font-semibold ${
@@ -423,7 +432,7 @@ export default function WeeklyView({
                 }`}>
                   {format(day, 'd')}
                 </div>
-                <div className={`text-xs ${
+                <div className={`text-xs whitespace-nowrap ${
                   !dayEnabled 
                     ? 'text-red-600' 
                     : isToday 
@@ -432,6 +441,17 @@ export default function WeeklyView({
                 }`}>
                   {totalCalories} cal
                 </div>
+                {!isEditMode && (
+                  <div className="w-full flex justify-center items-center mt-1">
+                    <RemarkIcon 
+                      date={day} 
+                      size="small" 
+                      showAddButton={true}
+                      externalRefreshTrigger={remarkRefreshTrigger}
+                      onRemarkChange={handleRemarkChange}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
@@ -480,21 +500,27 @@ export default function WeeklyView({
                   : 'bg-gray-50'
               }`}>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <h3 className={`text-base sm:text-lg font-semibold ${
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <h3 className={`text-base sm:text-lg font-semibold truncate ${
                       isToday 
                         ? 'text-blue-900' 
                         : 'text-gray-900'
                     }`}>
                       {format(day, 'EEEE, MMMM d')}
                     </h3>
+                    <RemarkIcon 
+                      date={day} 
+                      size="medium"
+                      externalRefreshTrigger={remarkRefreshTrigger}
+                      onRemarkChange={handleRemarkChange}
+                    />
                     {isToday && (
-                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full flex-shrink-0">
                         Today
                       </span>
                     )}
                   </div>
-                  <div className={`text-sm ${
+                  <div className={`text-sm flex-shrink-0 ml-2 ${
                     isToday 
                       ? 'text-blue-700' 
                       : 'text-gray-600'
@@ -506,7 +532,21 @@ export default function WeeklyView({
 
               {/* Meal Categories for this day */}
               <div className="p-3 sm:p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className={(() => {
+                  // Dynamic grid based on number of enabled categories
+                  const numCategories = mealCategories.length;
+                  let gridClass = 'grid gap-3 sm:gap-4 ';
+                  
+                  if (numCategories === 1) {
+                    return gridClass + 'grid-cols-1'; // Single category uses full width
+                  } else if (numCategories === 2) {
+                    return gridClass + 'grid-cols-1 sm:grid-cols-2'; // Two categories
+                  } else if (numCategories === 3) {
+                    return gridClass + 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'; // Three categories
+                  } else {
+                    return gridClass + 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'; // Four categories (original)
+                  }
+                })()}>
                   {mealCategories.map((category) => {
                     const dayMeals = getMealsForDateAndCategory(day, category.key);
                     const categoryCalories = dayMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0);

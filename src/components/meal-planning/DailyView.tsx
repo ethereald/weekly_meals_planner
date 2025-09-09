@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { format, isSameDay } from 'date-fns';
 import MealCard, { Meal } from './MealCard';
 import MealFormModal from './MealFormModal';
+import DailyRemark from './DailyRemark';
 import { SavedMeal } from '../../lib/api/meals';
 import { authApi, UserSettings } from '../../lib/auth-client';
 
@@ -222,6 +223,9 @@ export default function DailyView({
         </div>
       )}
       
+      {/* Daily Remark */}
+      <DailyRemark date={currentDate} />
+      
       {/* Sticky Daily Summary */}
       <div className="sticky top-24 z-10 bg-gray-50 pb-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
@@ -280,7 +284,14 @@ export default function DailyView({
             <div className="p-6">
               {categoryMeals.length > 0 ? (
                 <div className="space-y-3">
-                  {categoryMeals.map((meal) => (
+                  {categoryMeals
+                    .sort((a, b) => {
+                      // Sort meals by username (group by user)
+                      const userA = a.addedBy?.username || '';
+                      const userB = b.addedBy?.username || '';
+                      return userA.localeCompare(userB);
+                    })
+                    .map((meal) => (
                     <MealCard
                       key={meal.id}
                       meal={meal}

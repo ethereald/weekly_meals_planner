@@ -162,6 +162,16 @@ export const dailyPlannedMeals = pgTable('daily_planned_meals', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Daily Remarks Table
+export const dailyRemarks = pgTable('daily_remarks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  date: varchar('date', { length: 10 }).notNull(), // ISO date string (YYYY-MM-DD)
+  remark: text('remark').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 // Shopping Lists Table
 export const shoppingLists = pgTable('shopping_lists', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -235,6 +245,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   shoppingLists: many(shoppingLists),
   nutritionalGoals: many(nutritionalGoals),
   dailyPlannedMeals: many(dailyPlannedMeals),
+  dailyRemarks: many(dailyRemarks),
 }));
 
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
@@ -352,5 +363,12 @@ export const dailyPlannedMealsRelations = relations(dailyPlannedMeals, ({ one })
   meal: one(meals, {
     fields: [dailyPlannedMeals.mealId],
     references: [meals.id],
+  }),
+}));
+
+export const dailyRemarksRelations = relations(dailyRemarks, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyRemarks.userId],
+    references: [users.id],
   }),
 }));

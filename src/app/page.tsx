@@ -83,7 +83,7 @@ export default function Home() {
           </Link>
 
           {/* Profile Management Card */}
-          <Link href="/auth" className="group">
+          <Link href="/account" className="group">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group-hover:border-green-300">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">

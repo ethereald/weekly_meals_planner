@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
 
 export type Theme = 'light' | 'dark' | 'ocean' | 'forest' | 'sunset';
 
@@ -27,27 +28,36 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>('light');
   const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Load theme from user settings
   useEffect(() => {
     const loadTheme = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/user/settings', {
           credentials: 'include',
         });
         if (response.ok) {
           const data = await response.json();
           setThemeState((data.settings?.theme as Theme) || 'light');
+        } else {
+          // If not authenticated or no settings, use default
+          setThemeState('light');
         }
       } catch (error) {
         console.error('Failed to load theme:', error);
+        setThemeState('light');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadTheme();
-  }, []);
+    // Only load theme when auth loading is complete
+    if (!authLoading) {
+      loadTheme();
+    }
+  }, [isAuthenticated, authLoading]); // Re-run when authentication changes
 
   // Apply theme to document
   useEffect(() => {

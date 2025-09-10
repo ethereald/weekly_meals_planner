@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { dailyRemarks } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { dailyRemarks, users } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { verifyToken } from '@/lib/auth';
 
 const connectionString = process.env.DATABASE_URL!;
@@ -24,7 +24,7 @@ async function getUserFromToken(request: NextRequest) {
   }
 }
 
-// GET - Get remark for a specific date
+// GET - Get shared remark for a specific date
 export async function GET(request: NextRequest) {
   try {
     const userId = await getUserFromToken(request);
@@ -39,23 +39,56 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Date parameter is required' }, { status: 400 });
     }
 
-    const [remark] = await db
-      .select()
+    // Get the shared remark for this date (no user filtering)
+    const result = await db
+      .select({
+        id: dailyRemarks.id,
+        date: dailyRemarks.date,
+        remark: dailyRemarks.remark,
+        createdAt: dailyRemarks.createdAt,
+        updatedAt: dailyRemarks.updatedAt,
+        creator: {
+          id: users.id,
+          username: users.username,
+          displayName: users.displayName,
+        },
+        lastModifiedBy: dailyRemarks.lastModifiedBy,
+      })
       .from(dailyRemarks)
-      .where(and(
-        eq(dailyRemarks.userId, userId),
-        eq(dailyRemarks.date, date)
-      ))
+      .leftJoin(users, eq(dailyRemarks.userId, users.id))
+      .where(eq(dailyRemarks.date, date))
       .limit(1);
 
-    return NextResponse.json({ remark: remark || null });
+    const remark = result[0] || null;
+
+    // If there's a lastModifiedBy, get that user's info too
+    let lastModifiedByUser = null;
+    if (remark?.lastModifiedBy) {
+      const [modifiedByUser] = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          displayName: users.displayName,
+        })
+        .from(users)
+        .where(eq(users.id, remark.lastModifiedBy))
+        .limit(1);
+      lastModifiedByUser = modifiedByUser || null;
+    }
+
+    return NextResponse.json({ 
+      remark: remark ? {
+        ...remark,
+        lastModifiedByUser
+      } : null 
+    });
   } catch (error) {
     console.error('Error fetching daily remark:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// POST - Create or update remark for a date
+// POST - Create or update shared remark for a date
 export async function POST(request: NextRequest) {
   try {
     console.log('POST /api/daily-remarks - Starting request');
@@ -78,42 +111,38 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Checking for existing remark...');
-    // Check if remark already exists for this date
+    // Check if a shared remark already exists for this date
     const [existingRemark] = await db
       .select()
       .from(dailyRemarks)
-      .where(and(
-        eq(dailyRemarks.userId, userId),
-        eq(dailyRemarks.date, date)
-      ))
+      .where(eq(dailyRemarks.date, date))
       .limit(1);
 
     console.log('Existing remark:', existingRemark);
 
     let result;
     if (existingRemark) {
-      console.log('Updating existing remark...');
-      // Update existing remark
+      console.log('Updating existing shared remark...');
+      // Update existing shared remark
       [result] = await db
         .update(dailyRemarks)
         .set({
           remark,
+          lastModifiedBy: userId,
           updatedAt: new Date(),
         })
-        .where(and(
-          eq(dailyRemarks.userId, userId),
-          eq(dailyRemarks.date, date)
-        ))
+        .where(eq(dailyRemarks.date, date))
         .returning();
     } else {
-      console.log('Creating new remark...');
-      // Create new remark
+      console.log('Creating new shared remark...');
+      // Create new shared remark
       [result] = await db
         .insert(dailyRemarks)
         .values({
-          userId,
+          userId, // Creator
           date,
           remark,
+          lastModifiedBy: userId,
         })
         .returning();
     }
@@ -129,7 +158,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE - Delete remark for a date
+// DELETE - Delete shared remark for a date
 export async function DELETE(request: NextRequest) {
   try {
     const userId = await getUserFromToken(request);
@@ -144,12 +173,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Date parameter is required' }, { status: 400 });
     }
 
+    // Delete the shared remark for this date (any user can delete)
     await db
       .delete(dailyRemarks)
-      .where(and(
-        eq(dailyRemarks.userId, userId),
-        eq(dailyRemarks.date, date)
-      ));
+      .where(eq(dailyRemarks.date, date));
 
     return NextResponse.json({ success: true });
   } catch (error) {

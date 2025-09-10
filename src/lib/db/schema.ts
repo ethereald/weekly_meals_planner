@@ -162,12 +162,13 @@ export const dailyPlannedMeals = pgTable('daily_planned_meals', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-// Daily Remarks Table
+// Daily Remarks Table - Shared remarks (one per day for all users)
 export const dailyRemarks = pgTable('daily_remarks', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  date: varchar('date', { length: 10 }).notNull(), // ISO date string (YYYY-MM-DD)
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), // Creator
+  date: varchar('date', { length: 10 }).notNull().unique(), // ISO date string (YYYY-MM-DD) - unique per date
   remark: text('remark').notNull(),
+  lastModifiedBy: uuid('last_modified_by').references(() => users.id, { onDelete: 'set null' }), // Who last modified
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

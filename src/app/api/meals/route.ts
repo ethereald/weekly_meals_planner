@@ -302,21 +302,113 @@ async function putHandler(request: AuthenticatedRequest) {
       return NextResponse.json({ error: 'Meal name is required' }, { status: 400 });
     }
 
-    // Update the planned meal
-    const updatedMeal = await db
+    // First, get the current planned meal to find the associated meal
+    const currentPlannedMeal = await db
+      .select({
+        id: dailyPlannedMeals.id,
+        userId: dailyPlannedMeals.userId,
+        mealId: dailyPlannedMeals.mealId,
+        plannedDate: dailyPlannedMeals.plannedDate,
+        meal: meals
+      })
+      .from(dailyPlannedMeals)
+      .innerJoin(meals, eq(dailyPlannedMeals.mealId, meals.id))
+      .where(eq(dailyPlannedMeals.id, id))
+      .limit(1);
+
+    if (currentPlannedMeal.length === 0) {
+      return NextResponse.json({ error: 'Planned meal not found' }, { status: 404 });
+    }
+
+    const plannedMeal = currentPlannedMeal[0];
+
+    // Check if user can edit this planned meal (owner or admin)
+    const currentUser = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const userRole = currentUser[0]?.role || 'user';
+    const isAdmin = userRole === 'admin';
+    const canEditPlannedMeal = isAdmin || plannedMeal.userId === userId;
+
+    if (!canEditPlannedMeal) {
+      return NextResponse.json({ error: 'Permission denied to edit this planned meal' }, { status: 403 });
+    }
+
+    let mealId = plannedMeal.mealId;
+
+    // Handle meal name update
+    if (name !== plannedMeal.meal.name) {
+      // Check if user owns the original meal
+      const canEditOriginalMeal = isAdmin || plannedMeal.meal.userId === userId;
+
+      if (canEditOriginalMeal) {
+        // User owns the meal, update the existing meal
+        await db
+          .update(meals)
+          .set({
+            name: name,
+            updatedAt: new Date(),
+          })
+          .where(eq(meals.id, plannedMeal.mealId));
+      } else {
+        // User doesn't own the meal, check if a meal with the new name already exists
+        const existingMeal = await db
+          .select()
+          .from(meals)
+          .where(eq(meals.name, name))
+          .limit(1);
+
+        if (existingMeal.length > 0) {
+          // Use existing meal
+          mealId = existingMeal[0].id;
+        } else {
+          // Create a new meal for this user
+          const newMeal = await db
+            .insert(meals)
+            .values({
+              userId,
+              categoryId: null,
+              name,
+              description: plannedMeal.meal.description || null,
+              difficulty: plannedMeal.meal.difficulty || 'easy',
+              cookTime: plannedMeal.meal.cookTime || null,
+              servings: plannedMeal.meal.servings || 2,
+              calories: plannedMeal.meal.calories || null,
+              protein: plannedMeal.meal.protein || null,
+              carbs: plannedMeal.meal.carbs || null,
+              fat: plannedMeal.meal.fat || null,
+              fiber: plannedMeal.meal.fiber || null,
+              sugar: plannedMeal.meal.sugar || null,
+              sodium: plannedMeal.meal.sodium || null,
+              instructions: plannedMeal.meal.instructions || '',
+              notes: plannedMeal.meal.notes || null,
+              imageUrl: plannedMeal.meal.imageUrl || null,
+              isPublic: false,
+              isFavorite: false,
+            })
+            .returning();
+
+          mealId = newMeal[0].id;
+        }
+      }
+    }
+
+    // Update the planned meal with new mealId (if changed) and planning data
+    const updatedPlannedMeal = await db
       .update(dailyPlannedMeals)
       .set({
+        mealId: mealId,
         mealSlot: time || null,
         notes: notes || null,
       })
-      .where(and(
-        eq(dailyPlannedMeals.id, id),
-        eq(dailyPlannedMeals.userId, userId)
-      ))
+      .where(eq(dailyPlannedMeals.id, id))
       .returning();
 
-    if (updatedMeal.length === 0) {
-      return NextResponse.json({ error: 'Meal not found or access denied' }, { status: 404 });
+    if (updatedPlannedMeal.length === 0) {
+      return NextResponse.json({ error: 'Failed to update planned meal' }, { status: 500 });
     }
 
     // Return the complete updated meal data with creator info

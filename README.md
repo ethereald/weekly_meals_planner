@@ -1,4 +1,5 @@
 ![Weekly Meals Planner Logo](./public/icons/icon.svg)
+
 # Weekly Meals Planner
 
 A comprehensive meal planning application built with Next.js 15, TypeScript, and Tailwind CSS. Features multi-user authentication, dual database support (SQLite for development, PostgreSQL for production), and a complete meal planning system.
@@ -6,96 +7,104 @@ A comprehensive meal planning application built with Next.js 15, TypeScript, and
 ## 🚀 Features
 
 ### Authentication System
-- ✅ **Multi-User Support** - Individual user accounts with secure authentication
-- ✅ **Username/Password Login** - Simple, secure authentication
-- ✅ **Password Management** - Secure password hashing and change functionality
-- ✅ **JWT Tokens** - Stateless authentication with JWT
-- ✅ **Protected Routes** - Middleware-based route protection
+
+* ✅ **Multi-User Support** \- Individual user accounts with secure authentication
+* ✅ **Username/Password Login** \- Simple\, secure authentication
+* ✅ **Password Management** \- Secure password hashing and change functionality
+* ✅ **JWT Tokens** \- Stateless authentication with JWT
+* ✅ **Protected Routes** \- Middleware\-based route protection
 
 ### Meal Planning (Coming Soon)
-- 📅 **Weekly Planning** - Plan meals for the entire week
-- 🍽️ **Meal Categories** - Breakfast, lunch, dinner, and snacks
-- 📋 **Shopping Lists** - Auto-generated from meal plans
-- 🥗 **Ingredient Management** - Track ingredients and quantities
-- 📊 **Nutritional Goals** - Set and track nutritional targets
-- 🔄 **Meal Rotation** - Reuse favorite meal plans
+
+* 📅 **Weekly Planning** \- Plan meals for the entire week
+* 🍽️ **Meal Categories** \- Breakfast\, lunch\, dinner\, and snacks
+* 📋 **Shopping Lists** \- Auto\-generated from meal plans
+* 🥗 **Ingredient Management** \- Track ingredients and quantities
+* 📊 **Nutritional Goals** \- Set and track nutritional targets
+* 🔄 **Meal Rotation** \- Reuse favorite meal plans
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes
-- **Database**: SQLite (development) / PostgreSQL (production)
-- **ORM**: Drizzle ORM
-- **Authentication**: bcryptjs, jsonwebtoken
-- **Package Manager**: pnpm
-- **Deployment**: Vercel-ready
+* <strong>Frontend</strong>: Next.js 15 (App Router), TypeScript, Tailwind CSS
+* <strong>Backend</strong>: Next.js API Routes
+* <strong>Database</strong>: SQLite (development) / PostgreSQL (production)
+* <strong>ORM</strong>: Drizzle ORM
+* <strong>Authentication</strong>: bcryptjs, jsonwebtoken
+* <strong>Package Manager</strong>: pnpm
+* <strong>Deployment</strong>: Vercel-ready
 
 ## 📦 Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd weekly_meals_planner
-   ```
 
+    ```bash
+    git clone <repository-url>
+    cd weekly_meals_planner
+    ```
 2. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
 
+    ```bash
+    pnpm install
+    ```
 3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   ```
-   
-   Edit `.env.local`:
-   ```bash
-   # Required for JWT authentication
-   NEXTAUTH_SECRET="your-secret-key-here"
-   
-   # Database configuration
-   NODE_ENV="development"  # Uses SQLite for development
-   
-   # For production (PostgreSQL)
-   # NODE_ENV="production"
-   # DATABASE_URL="postgresql://username:password@host:port/database"
-   ```
 
+    ```bash
+    cp .env.example .env.local
+    ```
+
+    Edit `.env.local`:
+
+    ```bash
+    # Required for JWT authentication
+    NEXTAUTH_SECRET="your-secret-key-here"
+    
+    # Database configuration
+    NODE_ENV="development"  # Uses SQLite for development
+    
+    # For production (PostgreSQL)
+    # NODE_ENV="production"
+    # DATABASE_URL="postgresql://username:password@host:port/database"
+    ```
 4. **Initialize the database**
-   ```bash
-   pnpm db:push
-   ```
 
+    ```bash
+    pnpm db:push
+    ```
 5. **Start the development server**
-   ```bash
-   pnpm dev
-   ```
 
+    ```bash
+    pnpm dev
+    ```
 6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 🗄️ Database Setup
 
 This project supports dual database environments:
 
 ### Local Development (SQLite)
-- **Automatic**: Works out of the box with `NODE_ENV="development"`
-- **File**: Database stored in `./sqlite.db`
-- **No setup required**: Database file is created automatically
+
+* <strong>Automatic</strong>: Works out of the box with `NODE_ENV="development"`
+* <strong>File</strong>: Database stored in `./sqlite.db`
+* <strong>No setup required</strong>: Database file is created automatically
 
 ### Production (PostgreSQL)
+
 1. **Set up PostgreSQL** (e.g., on Vercel, Railway, or Supabase)
-2. **Update environment variables**:
-   ```bash
-   NODE_ENV="production"
-   DATABASE_URL="postgresql://username:password@host:port/database"
-   ```
-3. **Push schema to production**:
-   ```bash
-   pnpm db:push
-   ```
+2. <strong>Update environment variables</strong>:
+
+    ```bash
+    NODE_ENV="production"
+    DATABASE_URL="postgresql://username:password@host:port/database"
+    ```
+3. <strong>Push schema to production</strong>:
+
+    ```bash
+    pnpm db:push
+    ```
 
 ### Database Commands
+
 ```bash
 # Push schema to current database
 pnpm db:push
@@ -110,13 +119,16 @@ pnpm db:studio
 ## 🔐 Authentication
 
 ### Quick Test
+
 Visit `/auth` to test the authentication system:
+
 1. Register a new account
 2. Login with your credentials
 3. Change your password
 4. View your profile
 
 ### API Usage
+
 ```typescript
 import { authApi } from '@/lib/auth-client';
 
@@ -158,16 +170,19 @@ src/
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
+
 1. **Connect your repository** to Vercel
 2. **Set environment variables** in Vercel dashboard:
-   ```bash
-   NEXTAUTH_SECRET="your-production-secret"
-   NODE_ENV="production"
-   DATABASE_URL="your-postgresql-url"
-   ```
-3. **Deploy**: Vercel will automatically build and deploy
+
+    ```bash
+    NEXTAUTH_SECRET="your-production-secret"
+    NODE_ENV="production"
+    DATABASE_URL="your-postgresql-url"
+    ```
+3. <strong>Deploy</strong>: Vercel will automatically build and deploy
 
 ### Manual Deployment
+
 ```bash
 # Build the application
 pnpm build
@@ -179,6 +194,7 @@ pnpm start
 ## 🧪 Development
 
 ### Available Scripts
+
 ```bash
 # Development
 pnpm dev          # Start development server
@@ -193,19 +209,21 @@ pnpm db:studio    # Open Drizzle Studio
 ```
 
 ### Database Schema
+
 The project includes a comprehensive database schema for:
-- **Users** - User accounts and authentication
-- **Meals** - Individual meal entries
-- **Ingredients** - Ingredient database
-- **Recipes** - Recipe management
-- **Meal Plans** - Weekly meal planning
-- **Shopping Lists** - Auto-generated shopping lists
-- **Nutritional Goals** - User nutritional targets
+
+* **Users** \- User accounts and authentication
+* **Meals** \- Individual meal entries
+* **Ingredients** \- Ingredient database
+* **Recipes** \- Recipe management
+* **Meal Plans** \- Weekly meal planning
+* **Shopping Lists** \- Auto\-generated shopping lists
+* **Nutritional Goals** \- User nutritional targets
 
 ## 🔧 Environment Variables
 
 | Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
+| -------- | ----------- | -------- | ------- |
 | `NEXTAUTH_SECRET` | Secret key for JWT signing | Yes | - |
 | `NODE_ENV` | Environment (development/production) | Yes | development |
 | `DATABASE_URL` | PostgreSQL connection string | Production only | - |
@@ -225,18 +243,19 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- Built with [Next.js](https://nextjs.org/)
-- Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Database powered by [Drizzle ORM](https://orm.drizzle.team/)
-- Authentication using [bcryptjs](https://github.com/dcodeIO/bcrypt.js)
+* Built with [Next.js](https://nextjs.org/)
+* Styled with [Tailwind CSS](https://tailwindcss.com/)
+* Database powered by [Drizzle ORM](https://orm.drizzle.team/)
+* Authentication using [bcryptjs](https://github.com/dcodeIO/bcrypt.js)
 
 ## 📞 Support
 
 If you have any questions or need help:
+
 1. Check the [Authentication documentation](./AUTHENTICATION.md)
 2. Open an issue on GitHub
 3. Check the development server logs for errors
 
----
+***
 
 **Happy meal planning! 🍽️**

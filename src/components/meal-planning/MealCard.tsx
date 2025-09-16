@@ -47,6 +47,7 @@ interface MealCardProps {
 
 export default function MealCard({ meal, currentUser, onEdit, onDelete, compact = false }: MealCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   // Get display name for showing to user, but use username for color consistency
   const getDisplayName = (user: { username: string; displayName?: string }) => {
@@ -82,9 +83,10 @@ export default function MealCard({ meal, currentUser, onEdit, onDelete, compact 
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${
-      compact ? 'p-3' : 'p-4'
-    }`}>
+    <>
+      <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow ${
+        compact ? 'p-3' : 'p-4'
+      }`}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
@@ -163,7 +165,7 @@ export default function MealCard({ meal, currentUser, onEdit, onDelete, compact 
                   <button
                     onClick={() => {
                       console.log('🗑️ MealCard: Delete button clicked for meal:', meal.id, meal.name);
-                      onDelete(meal.id);
+                      setShowConfirmDelete(true);
                       setShowMenu(false);
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-b-md"
@@ -177,5 +179,36 @@ export default function MealCard({ meal, currentUser, onEdit, onDelete, compact 
         )}
       </div>
     </div>
+
+    {/* Confirmation Dialog */}
+    {showConfirmDelete && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Meal</h3>
+          <p className="text-gray-600 mb-4">
+            Are you sure you want to delete "{meal.name}"? This action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowConfirmDelete(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                console.log('🗑️ MealCard: Confirmed deletion for meal:', meal.id, meal.name);
+                onDelete(meal.id);
+                setShowConfirmDelete(false);
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

@@ -252,6 +252,7 @@ function MealPlanningContent() {
         category: mealData.category,
         time: mealData.time,
         notes: mealData.notes,
+        ...(('plannedDate' in mealData) && { plannedDate: (mealData as any).plannedDate }),
       });
 
       if (updatedMeal) {

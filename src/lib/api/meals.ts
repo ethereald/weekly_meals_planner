@@ -213,6 +213,7 @@ export const mealsApi = {
     category: string;
     time?: string;
     notes?: string;
+    plannedDate?: string;
   }): Promise<PlannedMeal | null> {
     try {
       const response = await fetch(`/api/meals?id=${plannedMealId}`, {

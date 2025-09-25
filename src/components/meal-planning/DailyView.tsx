@@ -161,11 +161,19 @@ export default function DailyView({
     setIsModalOpen(true);
   };
 
-  const handleSaveMeal = (mealData: Omit<Meal, 'id'>) => {
+  const handleSaveMeal = (mealData: Omit<Meal, 'id'>, customDate?: Date) => {
     if (editingMeal) {
-      onEditMeal(editingMeal.id, mealData);
+      // When editing, we need to pass the custom date if it changed
+      const updatedMealData = { ...mealData };
+      if (customDate) {
+        // Include the planned date in the meal data for editing
+        (updatedMealData as any).plannedDate = format(customDate, 'yyyy-MM-dd');
+      }
+      onEditMeal(editingMeal.id, updatedMealData);
     } else {
-      onAddMeal(mealData, currentDate); // Pass the current date
+      // Use customDate if provided (from date picker), otherwise use currentDate
+      const targetDate = customDate || currentDate;
+      onAddMeal(mealData, targetDate);
     }
   };
 

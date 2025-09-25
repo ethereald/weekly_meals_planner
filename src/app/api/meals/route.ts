@@ -296,7 +296,7 @@ async function putHandler(request: AuthenticatedRequest) {
     }
 
     const body = await request.json();
-    const { name, category, time, notes } = body;
+    const { name, category, time, notes, plannedDate } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'Meal name is required' }, { status: 400 });
@@ -403,6 +403,7 @@ async function putHandler(request: AuthenticatedRequest) {
         mealId: mealId,
         mealSlot: time || null,
         notes: notes || null,
+        ...(plannedDate && { plannedDate: plannedDate }), // Update planned date if provided
       })
       .where(eq(dailyPlannedMeals.id, id))
       .returning();

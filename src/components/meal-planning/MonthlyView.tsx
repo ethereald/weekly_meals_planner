@@ -132,9 +132,11 @@ export default function MonthlyView({
     setIsModalOpen(true);
   };
 
-  const handleSaveMeal = (mealData: Omit<Meal, 'id'>) => {
-    if (selectedDate) {
-      onAddMeal(mealData, selectedDate);
+  const handleSaveMeal = (mealData: Omit<Meal, 'id'>, customDate?: Date) => {
+    // Use customDate if provided (from date picker), otherwise fall back to selectedDate
+    const targetDate = customDate || selectedDate;
+    if (targetDate) {
+      onAddMeal(mealData, targetDate);
     }
   };
 

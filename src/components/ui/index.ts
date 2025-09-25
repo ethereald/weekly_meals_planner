@@ -1,6 +1,3 @@
 // Export all UI components from this file
-// Example:
-// export { Button } from './button';
-// export { Input } from './input';
-
-export {};
+export { default as Calendar } from './Calendar';
+export { default as DatePicker } from './DatePicker';

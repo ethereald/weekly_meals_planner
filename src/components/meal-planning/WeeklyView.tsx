@@ -260,11 +260,21 @@ export default function WeeklyView({
     setIsModalOpen(true);
   };
 
-  const handleSaveMeal = (mealData: Omit<Meal, 'id'>) => {
+  const handleSaveMeal = (mealData: Omit<Meal, 'id'>, customDate?: Date) => {
     if (editingMeal) {
-      onEditMeal(editingMeal.id, mealData);
-    } else if (selectedDate) {
-      onAddMeal(mealData, selectedDate);
+      // When editing, we need to pass the custom date if it changed
+      const updatedMealData = { ...mealData };
+      if (customDate) {
+        // Include the planned date in the meal data for editing
+        (updatedMealData as any).plannedDate = format(customDate, 'yyyy-MM-dd');
+      }
+      onEditMeal(editingMeal.id, updatedMealData);
+    } else {
+      // Use customDate if provided (from date picker), otherwise fall back to selectedDate
+      const targetDate = customDate || selectedDate;
+      if (targetDate) {
+        onAddMeal(mealData, targetDate);
+      }
     }
   };
 

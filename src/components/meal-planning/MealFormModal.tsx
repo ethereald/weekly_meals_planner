@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { format } from 'date-fns';
 import { Meal } from './MealCard';
 import { SavedMeal } from '../../lib/api/meals';
 import { UserSettings } from '../../lib/auth-client';
+import DatePicker from '../ui/DatePicker';
 
 interface MealFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (meal: Omit<Meal, 'id'>) => void;
+  onSave: (meal: Omit<Meal, 'id'>, date?: Date) => void;
   editingMeal?: Meal | null;
   selectedDate?: Date;
   selectedCategory?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -30,7 +32,8 @@ export default function MealFormModal({
     name: '',
     category: 'breakfast' as 'breakfast' | 'lunch' | 'dinner' | 'snack',
     selectedMealId: '',
-    notes: ''
+    notes: '',
+    plannedDate: ''
   });
 
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
@@ -62,36 +65,43 @@ export default function MealFormModal({
 
   useEffect(() => {
     if (editingMeal) {
+      // When editing, use the existing planned date or fall back to selectedDate
+      const editingDate = editingMeal.plannedDate ? editingMeal.plannedDate : format(selectedDate || new Date(), 'yyyy-MM-dd');
       setFormData({
         name: editingMeal.name,
         category: editingMeal.category,
         selectedMealId: '',
-        notes: editingMeal.notes || ''
+        notes: editingMeal.notes || '',
+        plannedDate: editingDate
       });
     } else {
       // Auto-select single category if only one is enabled
       const defaultCategory = singleCategory || selectedCategory || categoryOptions[0]?.value || 'breakfast';
+      const defaultDate = format(selectedDate || new Date(), 'yyyy-MM-dd');
       setFormData({
         name: '',
         category: defaultCategory as 'breakfast' | 'lunch' | 'dinner' | 'snack',
         selectedMealId: '',
-        notes: ''
+        notes: '',
+        plannedDate: defaultDate
       });
     }
-  }, [editingMeal, selectedCategory, singleCategory, categoryOptions]);
+  }, [editingMeal, selectedCategory, singleCategory, categoryOptions, selectedDate]);
 
   // Reset form when modal opens for a new meal
   useEffect(() => {
     if (isOpen && !editingMeal) {
       const defaultCategory = singleCategory || selectedCategory || categoryOptions[0]?.value || 'breakfast';
+      const defaultDate = format(selectedDate || new Date(), 'yyyy-MM-dd');
       setFormData({
         name: '',
         category: defaultCategory as 'breakfast' | 'lunch' | 'dinner' | 'snack',
         selectedMealId: '',
-        notes: ''
+        notes: '',
+        plannedDate: defaultDate
       });
     }
-  }, [isOpen]);
+  }, [isOpen, singleCategory, selectedCategory, categoryOptions, selectedDate, editingMeal]);
 
   // Get all unique tags from saved meals
   const getAllTags = () => {
@@ -140,7 +150,10 @@ export default function MealFormModal({
       notes: formData.notes || undefined
     };
 
-    onSave(mealData);
+    // Parse the selected date from form
+    const selectedMealDate = new Date(formData.plannedDate + 'T00:00:00');
+
+    onSave(mealData, selectedMealDate);
     onClose();
   };
 
@@ -223,6 +236,21 @@ export default function MealFormModal({
                 </div>
               </div>
             )}
+
+            {/* Date Selection */}
+            <div>
+              <label htmlFor="plannedDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Planned Date *
+              </label>
+              <DatePicker
+                id="plannedDate"
+                value={formData.plannedDate}
+                onChange={(dateString) => setFormData({ ...formData, plannedDate: dateString })}
+                placeholder="Select a date"
+                required
+                className="min-w-0 box-border"
+              />
+            </div>
 
             {/* Tag Filter Section */}
             {!isLoadingMeals && savedMeals.length > 0 && getAllTags().length > 0 && (

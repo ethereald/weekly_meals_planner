@@ -140,6 +140,14 @@ export default function WeeklyView({
     loadWeeklyDaySettings();
   }, [currentDate]);
 
+  // Effect to ensure remarks are loaded when the component is ready
+  useEffect(() => {
+    if (!settingsLoading && !daySettingsLoading) {
+      // Trigger a refresh to ensure all RemarkIcon components load their data
+      setRemarkRefreshTrigger(prev => prev + 1);
+    }
+  }, [settingsLoading, daySettingsLoading]);
+
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 

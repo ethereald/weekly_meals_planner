@@ -61,9 +61,14 @@ export default function RemarkIcon({
     onRemarkChange?.(); // Call external callback if provided
   };
 
-  // Don't show anything if loading
+  // Show small placeholder while loading
   if (isLoading) {
-    return null;
+    const iconSize = size === 'small' ? 'w-4 h-4' : 'w-5 h-5';
+    return (
+      <div className={`${iconSize} opacity-30 ${className}`}>
+        <div className={`${iconSize} bg-gray-200 rounded animate-pulse`}></div>
+      </div>
+    );
   }
 
   // If no remark exists, show add button only if showAddButton is true

@@ -129,11 +129,14 @@ async function postHandler(request: AuthenticatedRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // First, check if a meal with this name already exists (from any user)
+    // First, check if a meal with this name already exists for this user
     const existingMeal = await db
       .select()
       .from(meals)
-      .where(eq(meals.name, name))
+      .where(and(
+        eq(meals.name, name),
+        eq(meals.userId, userId)
+      ))
       .limit(1);
 
     let mealId: string;
@@ -354,11 +357,14 @@ async function putHandler(request: AuthenticatedRequest) {
           })
           .where(eq(meals.id, plannedMeal.mealId));
       } else {
-        // User doesn't own the meal, check if a meal with the new name already exists
+        // User doesn't own the meal, check if a meal with the new name already exists for this user
         const existingMeal = await db
           .select()
           .from(meals)
-          .where(eq(meals.name, name))
+          .where(and(
+            eq(meals.name, name),
+            eq(meals.userId, userId)
+          ))
           .limit(1);
 
         if (existingMeal.length > 0) {

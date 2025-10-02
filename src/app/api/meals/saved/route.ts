@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { db, meals, tags, mealTags } from '@/lib/db';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, and } from 'drizzle-orm';
 
 async function postHandler(request: AuthenticatedRequest) {
   try {
@@ -19,11 +19,14 @@ async function postHandler(request: AuthenticatedRequest) {
     const existingMeal = await db
       .select()
       .from(meals)
-      .where(eq(meals.name, name.trim()))
+      .where(and(
+        eq(meals.name, name.trim()),
+        eq(meals.userId, userId)
+      ))
       .limit(1);
 
     if (existingMeal.length > 0) {
-      return NextResponse.json({ error: 'A meal with this name already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'A meal with this name already exists in your recipes' }, { status: 409 });
     }
 
     // Create the new meal

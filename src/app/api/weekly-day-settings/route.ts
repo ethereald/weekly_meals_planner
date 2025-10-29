@@ -27,19 +27,19 @@ async function getHandler(request: AuthenticatedRequest) {
       .limit(1);
 
     if (weekSettings.length === 0) {
-      // Create default settings for this week (all days enabled)
+      // Create default settings for this week (all categories enabled for all days)
       const defaultSettings = await db
         .insert(weeklyDaySettings)
         .values({
           weekStartDate: weekStart,
-          enabledDays: {
-            sunday: true,
-            monday: true,
-            tuesday: true,
-            wednesday: true,
-            thursday: true,
-            friday: true,
-            saturday: true
+          enabledCategories: {
+            sunday: { breakfast: true, lunch: true, dinner: true, snack: true },
+            monday: { breakfast: true, lunch: true, dinner: true, snack: true },
+            tuesday: { breakfast: true, lunch: true, dinner: true, snack: true },
+            wednesday: { breakfast: true, lunch: true, dinner: true, snack: true },
+            thursday: { breakfast: true, lunch: true, dinner: true, snack: true },
+            friday: { breakfast: true, lunch: true, dinner: true, snack: true },
+            saturday: { breakfast: true, lunch: true, dinner: true, snack: true }
           },
           lastUpdatedBy: null
         })
@@ -68,7 +68,7 @@ async function getHandler(request: AuthenticatedRequest) {
 
     return NextResponse.json({
       weekStartDate: weekSettings[0].weekStartDate,
-      enabledDays: weekSettings[0].enabledDays,
+      enabledCategories: weekSettings[0].enabledCategories,
       lastUpdatedBy: lastUpdatedByUser,
       updatedAt: weekSettings[0].updatedAt
     });
@@ -82,17 +82,25 @@ async function putHandler(request: AuthenticatedRequest) {
   try {
     const userId = request.user!.userId;
     const body = await request.json();
-    const { weekStart, enabledDays } = body;
+    const { weekStart, enabledCategories } = body;
 
-    if (!weekStart || !enabledDays) {
-      return NextResponse.json({ error: 'weekStart and enabledDays are required' }, { status: 400 });
+    if (!weekStart || !enabledCategories) {
+      return NextResponse.json({ error: 'weekStart and enabledCategories are required' }, { status: 400 });
     }
 
-    // Validate enabledDays structure
+    // Validate enabledCategories structure
     const requiredDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const requiredCategories = ['breakfast', 'lunch', 'dinner', 'snack'];
+    
     for (const day of requiredDays) {
-      if (typeof enabledDays[day] !== 'boolean') {
-        return NextResponse.json({ error: `Invalid enabledDays format: ${day} must be boolean` }, { status: 400 });
+      if (!enabledCategories[day] || typeof enabledCategories[day] !== 'object') {
+        return NextResponse.json({ error: `Invalid enabledCategories format: ${day} must be an object` }, { status: 400 });
+      }
+      
+      for (const category of requiredCategories) {
+        if (typeof enabledCategories[day][category] !== 'boolean') {
+          return NextResponse.json({ error: `Invalid enabledCategories format: ${day}.${category} must be boolean` }, { status: 400 });
+        }
       }
     }
 
@@ -109,7 +117,7 @@ async function putHandler(request: AuthenticatedRequest) {
       updatedSettings = await db
         .update(weeklyDaySettings)
         .set({
-          enabledDays,
+          enabledCategories,
           lastUpdatedBy: userId,
           updatedAt: new Date()
         })
@@ -121,7 +129,7 @@ async function putHandler(request: AuthenticatedRequest) {
         .insert(weeklyDaySettings)
         .values({
           weekStartDate: weekStart,
-          enabledDays,
+          enabledCategories,
           lastUpdatedBy: userId
         })
         .returning();
@@ -140,7 +148,7 @@ async function putHandler(request: AuthenticatedRequest) {
 
     return NextResponse.json({
       weekStartDate: updatedSettings[0].weekStartDate,
-      enabledDays: updatedSettings[0].enabledDays,
+      enabledCategories: updatedSettings[0].enabledCategories,
       lastUpdatedBy: userResult[0] || null,
       updatedAt: updatedSettings[0].updatedAt
     });

@@ -39,16 +39,24 @@ export default function WeeklyView({
   // Global refresh trigger for remark icons
   const [remarkRefreshTrigger, setRemarkRefreshTrigger] = useState(0);
   
-  // State for day enable/disable functionality
+  // State for category enable/disable functionality
   const [isEditMode, setIsEditMode] = useState(false);
-  const [enabledDays, setEnabledDays] = useState<Record<string, boolean>>(() => {
-    // Initialize all days as enabled by default
-    const initialState: Record<string, boolean> = {};
+  const [enabledCategories, setEnabledCategories] = useState<Record<string, Record<string, boolean>>>(() => {
+    // Initialize all categories for all days as enabled by default
+    const initialState: Record<string, Record<string, boolean>> = {};
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-    for (let i = 0; i < 7; i++) {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    
+    days.forEach((dayName, i) => {
       const day = addDays(weekStart, i);
-      initialState[format(day, 'yyyy-MM-dd')] = true;
-    }
+      const dayKey = format(day, 'yyyy-MM-dd');
+      initialState[dayKey] = {
+        breakfast: true,
+        lunch: true,
+        dinner: true,
+        snack: true
+      };
+    });
     return initialState;
   });
   const [daySettingsLoading, setDaySettingsLoading] = useState(true);
@@ -73,7 +81,7 @@ export default function WeeklyView({
     loadUserSettings();
   }, []);
 
-  // Load weekly day settings when the week changes
+  // Load weekly category settings when the week changes
   useEffect(() => {
     const loadWeeklyDaySettings = async () => {
       setDaySettingsLoading(true);
@@ -84,7 +92,7 @@ export default function WeeklyView({
         const response = await fetch(`/api/weekly-day-settings?weekStart=${weekStartDate}`);
         if (response.ok) {
           const data = await response.json();
-          if (data.enabledDays) {
+          if (data.enabledCategories) {
             // Convert the database format to our component format
             const dayMapping: Record<string, string> = {
               'sunday': format(addDays(weekStart, 0), 'yyyy-MM-dd'),
@@ -96,42 +104,62 @@ export default function WeeklyView({
               'saturday': format(addDays(weekStart, 6), 'yyyy-MM-dd'),
             };
             
-            const newEnabledDays: Record<string, boolean> = {};
+            const newEnabledCategories: Record<string, Record<string, boolean>> = {};
             Object.entries(dayMapping).forEach(([dayName, dateStr]) => {
-              newEnabledDays[dateStr] = data.enabledDays[dayName] ?? true;
+              newEnabledCategories[dateStr] = data.enabledCategories[dayName] ?? {
+                breakfast: true,
+                lunch: true,
+                dinner: true,
+                snack: true
+              };
             });
             
-            setEnabledDays(newEnabledDays);
+            setEnabledCategories(newEnabledCategories);
           } else {
             // No settings found, use default (all enabled)
-            const defaultEnabledDays: Record<string, boolean> = {};
+            const defaultEnabledCategories: Record<string, Record<string, boolean>> = {};
             for (let i = 0; i < 7; i++) {
               const day = addDays(weekStart, i);
-              defaultEnabledDays[format(day, 'yyyy-MM-dd')] = true;
+              defaultEnabledCategories[format(day, 'yyyy-MM-dd')] = {
+                breakfast: true,
+                lunch: true,
+                dinner: true,
+                snack: true
+              };
             }
-            setEnabledDays(defaultEnabledDays);
+            setEnabledCategories(defaultEnabledCategories);
           }
         } else {
           console.error('Failed to load weekly day settings');
           // Fallback to default
-          const defaultEnabledDays: Record<string, boolean> = {};
+          const defaultEnabledCategories: Record<string, Record<string, boolean>> = {};
           const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
           for (let i = 0; i < 7; i++) {
             const day = addDays(weekStart, i);
-            defaultEnabledDays[format(day, 'yyyy-MM-dd')] = true;
+            defaultEnabledCategories[format(day, 'yyyy-MM-dd')] = {
+              breakfast: true,
+              lunch: true,
+              dinner: true,
+              snack: true
+            };
           }
-          setEnabledDays(defaultEnabledDays);
+          setEnabledCategories(defaultEnabledCategories);
         }
       } catch (error) {
         console.error('Error loading weekly day settings:', error);
         // Fallback to default
-        const defaultEnabledDays: Record<string, boolean> = {};
+        const defaultEnabledCategories: Record<string, Record<string, boolean>> = {};
         const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
         for (let i = 0; i < 7; i++) {
           const day = addDays(weekStart, i);
-          defaultEnabledDays[format(day, 'yyyy-MM-dd')] = true;
+          defaultEnabledCategories[format(day, 'yyyy-MM-dd')] = {
+            breakfast: true,
+            lunch: true,
+            dinner: true,
+            snack: true
+          };
         }
-        setEnabledDays(defaultEnabledDays);
+        setEnabledCategories(defaultEnabledCategories);
       } finally {
         setDaySettingsLoading(false);
       }
@@ -151,21 +179,21 @@ export default function WeeklyView({
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  // Function to save weekly day settings to the database
-  const saveWeeklyDaySettings = async (newEnabledDays: Record<string, boolean>) => {
+  // Function to save weekly category settings to the database
+  const saveWeeklyCategorySettings = async (newEnabledCategories: Record<string, Record<string, boolean>>) => {
     try {
       const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
       const weekStartDate = format(weekStart, 'yyyy-MM-dd');
       
       // Convert our component format to the database format
-      const enabledDays = {
-        sunday: newEnabledDays[format(addDays(weekStart, 0), 'yyyy-MM-dd')] ?? true,
-        monday: newEnabledDays[format(addDays(weekStart, 1), 'yyyy-MM-dd')] ?? true,
-        tuesday: newEnabledDays[format(addDays(weekStart, 2), 'yyyy-MM-dd')] ?? true,
-        wednesday: newEnabledDays[format(addDays(weekStart, 3), 'yyyy-MM-dd')] ?? true,
-        thursday: newEnabledDays[format(addDays(weekStart, 4), 'yyyy-MM-dd')] ?? true,
-        friday: newEnabledDays[format(addDays(weekStart, 5), 'yyyy-MM-dd')] ?? true,
-        saturday: newEnabledDays[format(addDays(weekStart, 6), 'yyyy-MM-dd')] ?? true,
+      const enabledCategories = {
+        sunday: newEnabledCategories[format(addDays(weekStart, 0), 'yyyy-MM-dd')] ?? { breakfast: true, lunch: true, dinner: true, snack: true },
+        monday: newEnabledCategories[format(addDays(weekStart, 1), 'yyyy-MM-dd')] ?? { breakfast: true, lunch: true, dinner: true, snack: true },
+        tuesday: newEnabledCategories[format(addDays(weekStart, 2), 'yyyy-MM-dd')] ?? { breakfast: true, lunch: true, dinner: true, snack: true },
+        wednesday: newEnabledCategories[format(addDays(weekStart, 3), 'yyyy-MM-dd')] ?? { breakfast: true, lunch: true, dinner: true, snack: true },
+        thursday: newEnabledCategories[format(addDays(weekStart, 4), 'yyyy-MM-dd')] ?? { breakfast: true, lunch: true, dinner: true, snack: true },
+        friday: newEnabledCategories[format(addDays(weekStart, 5), 'yyyy-MM-dd')] ?? { breakfast: true, lunch: true, dinner: true, snack: true },
+        saturday: newEnabledCategories[format(addDays(weekStart, 6), 'yyyy-MM-dd')] ?? { breakfast: true, lunch: true, dinner: true, snack: true },
       };
       
       const response = await fetch('/api/weekly-day-settings', {
@@ -175,39 +203,52 @@ export default function WeeklyView({
         },
         body: JSON.stringify({
           weekStart: weekStartDate,
-          enabledDays,
+          enabledCategories,
         }),
       });
       
       if (!response.ok) {
-        throw new Error('Failed to save weekly day settings');
+        throw new Error('Failed to save weekly category settings');
       }
       
-      console.log('Weekly day settings saved successfully');
+      console.log('Weekly category settings saved successfully');
     } catch (error) {
-      console.error('Error saving weekly day settings:', error);
+      console.error('Error saving weekly category settings:', error);
       // Could show a toast notification here
     }
   };
 
-  // Helper function to check if a day is enabled
-  const isDayEnabled = (date: Date) => {
+  // Helper function to check if a category is enabled for a specific day
+  const isCategoryEnabled = (date: Date, category: string) => {
     const dayKey = format(date, 'yyyy-MM-dd');
-    return enabledDays[dayKey] ?? true;
+    return enabledCategories[dayKey]?.[category] ?? true;
   };
 
-  // Helper function to toggle day enabled state
-  const toggleDayEnabled = async (date: Date) => {
+  // Helper function to check if any category is enabled for a day
+  const isDayEnabled = (date: Date) => {
     const dayKey = format(date, 'yyyy-MM-dd');
-    const newEnabledDays = {
-      ...enabledDays,
-      [dayKey]: !enabledDays[dayKey]
+    const dayCategories = enabledCategories[dayKey];
+    if (!dayCategories) return true;
+    
+    // Check if any category is enabled
+    return Object.values(dayCategories).some(enabled => enabled);
+  };
+
+  // Helper function to toggle category enabled state
+  const toggleCategoryEnabled = async (date: Date, category: string) => {
+    const dayKey = format(date, 'yyyy-MM-dd');
+    const newEnabledCategories = {
+      ...enabledCategories,
+      [dayKey]: {
+        ...enabledCategories[dayKey],
+        [category]: !enabledCategories[dayKey]?.[category]
+      }
     };
     
-    setEnabledDays(newEnabledDays);
+    setEnabledCategories(newEnabledCategories);
     
     // Save to database
-    await saveWeeklyDaySettings(newEnabledDays);
+    await saveWeeklyCategorySettings(newEnabledCategories);
   };
 
   const allMealCategories = [
@@ -242,8 +283,8 @@ export default function WeeklyView({
   };
 
   const handleAddMeal = (date: Date, category: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
-    // Don't allow adding meals to disabled days
-    if (!isDayEnabled(date)) {
+    // Don't allow adding meals to disabled categories
+    if (!isCategoryEnabled(date, category)) {
       return;
     }
     
@@ -360,7 +401,7 @@ export default function WeeklyView({
               <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              <span className="hidden xs:inline">{isEditMode ? 'Done' : 'Edit Days'}</span>
+              <span className="hidden xs:inline">{isEditMode ? 'Done' : 'Edit Categories'}</span>
               <span className="xs:hidden">{isEditMode ? 'Done' : 'Edit'}</span>
             </button>
           </div>
@@ -368,34 +409,44 @@ export default function WeeklyView({
           {isEditMode && (
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800 mb-2">
-                <strong>Edit Mode:</strong> Click on days below to enable or disable them. Disabled days will be greyed out and won't allow new meals to be added.
+                <strong>Edit Mode:</strong> Click on meal categories below to enable or disable them for each day. Disabled categories will be greyed out and won't allow new meals to be added.
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={async () => {
-                    const allEnabled: Record<string, boolean> = {};
+                    const allEnabled: Record<string, Record<string, boolean>> = {};
                     weekDays.forEach(day => {
-                      allEnabled[format(day, 'yyyy-MM-dd')] = true;
+                      allEnabled[format(day, 'yyyy-MM-dd')] = {
+                        breakfast: true,
+                        lunch: true,
+                        dinner: true,
+                        snack: true
+                      };
                     });
-                    setEnabledDays(allEnabled);
-                    await saveWeeklyDaySettings(allEnabled);
+                    setEnabledCategories(allEnabled);
+                    await saveWeeklyCategorySettings(allEnabled);
                   }}
                   className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
                 >
-                  Enable All
+                  Enable All Categories
                 </button>
                 <button
                   onClick={async () => {
-                    const allDisabled: Record<string, boolean> = {};
+                    const allDisabled: Record<string, Record<string, boolean>> = {};
                     weekDays.forEach(day => {
-                      allDisabled[format(day, 'yyyy-MM-dd')] = false;
+                      allDisabled[format(day, 'yyyy-MM-dd')] = {
+                        breakfast: false,
+                        lunch: false,
+                        dinner: false,
+                        snack: false
+                      };
                     });
-                    setEnabledDays(allDisabled);
-                    await saveWeeklyDaySettings(allDisabled);
+                    setEnabledCategories(allDisabled);
+                    await saveWeeklyCategorySettings(allDisabled);
                   }}
                   className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
                 >
-                  Disable All
+                  Disable All Categories
                 </button>
               </div>
             </div>
@@ -411,21 +462,12 @@ export default function WeeklyView({
               <div 
                 key={day.toISOString()} 
                 className={`text-center p-2 sm:p-3 rounded-lg transition-all ${
-                  isEditMode 
-                    ? 'cursor-pointer hover:scale-105' 
-                    : ''
-                } ${
                   !dayEnabled 
                     ? 'bg-red-100 border-2 border-red-200' 
                     : isToday 
                       ? 'bg-blue-50 border border-blue-200' 
                       : 'bg-gray-50'
-                } ${
-                  isEditMode && !dayEnabled 
-                    ? 'border-2 border-dashed border-red-400' 
-                    : ''
                 }`}
-                onClick={isEditMode ? () => toggleDayEnabled(day) : undefined}
               >
                 <div className={`text-xs sm:text-sm font-medium ${
                   !dayEnabled 
@@ -435,11 +477,6 @@ export default function WeeklyView({
                       : 'text-gray-900'
                 }`}>
                   {format(day, 'EEE')}
-                  {isEditMode && (
-                    <div className="text-center mt-1">
-                      <span>{dayEnabled ? '✓' : '✗'}</span>
-                    </div>
-                  )}
                 </div>
                 <div className={`text-base sm:text-lg font-semibold ${
                   !dayEnabled 
@@ -459,6 +496,23 @@ export default function WeeklyView({
                 }`}>
                   {totalCalories} cal
                 </div>
+                {isEditMode && (
+                  <div className="mt-2 space-y-1">
+                    {mealCategories.map(category => (
+                      <button
+                        key={category.key}
+                        onClick={() => toggleCategoryEnabled(day, category.key)}
+                        className={`w-full px-1 py-0.5 text-xs rounded transition-colors ${
+                          isCategoryEnabled(day, category.key)
+                            ? 'bg-green-200 text-green-800 hover:bg-green-300'
+                            : 'bg-red-200 text-red-800 hover:bg-red-300'
+                        }`}
+                      >
+                        {category.key.charAt(0).toUpperCase()}{category.key.slice(1)} {isCategoryEnabled(day, category.key) ? '✓' : '✗'}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {!isEditMode && (
                   <div className="w-full flex justify-center items-center mt-1">
                     <RemarkIcon 
@@ -480,16 +534,16 @@ export default function WeeklyView({
       {/* Horizontal Days Layout */}
       <div className="space-y-4">
         {weekDays.filter((day) => isDayEnabled(day)).length === 0 ? (
-          /* Show message when all days are disabled */
+          /* Show message when all categories for all days are disabled */
           <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
             <div className="text-gray-400 mb-4">
               <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10m4-10v10m-8 4h12a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Days Enabled</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Categories Enabled</h3>
             <p className="text-gray-600 mb-4">
-              All days for this week are currently disabled. Use the "Edit Days" button above to enable days for meal planning.
+              All meal categories for this week are currently disabled. Use the "Edit Categories" button above to enable categories for meal planning.
             </p>
             <button
               onClick={() => setIsEditMode(true)}
@@ -498,7 +552,7 @@ export default function WeeklyView({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Enable Days
+              Enable Categories
             </button>
           </div>
         ) : (
@@ -551,8 +605,9 @@ export default function WeeklyView({
               {/* Meal Categories for this day */}
               <div className="p-3 sm:p-6">
                 <div className={(() => {
-                  // Dynamic grid based on number of enabled categories
-                  const numCategories = mealCategories.length;
+                  // Dynamic grid based on number of enabled categories for this day
+                  const enabledCategoriesForDay = mealCategories.filter(category => isCategoryEnabled(day, category.key));
+                  const numCategories = enabledCategoriesForDay.length;
                   let gridClass = 'grid gap-3 sm:gap-4 ';
                   
                   if (numCategories === 1) {
@@ -565,7 +620,7 @@ export default function WeeklyView({
                     return gridClass + 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'; // Four categories (original)
                   }
                 })()}>
-                  {mealCategories.map((category) => {
+                  {mealCategories.filter(category => isCategoryEnabled(day, category.key)).map((category) => {
                     const dayMeals = getMealsForDateAndCategory(day, category.key);
                     const categoryCalories = dayMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
                     

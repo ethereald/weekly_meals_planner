@@ -225,11 +225,11 @@ export const globalSettings = pgTable('global_settings', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// Weekly Day Settings Table - stores enable/disable status for each week
+// Weekly Day Settings Table - stores enable/disable status for each category per day per week
 export const weeklyDaySettings = pgTable('weekly_day_settings', {
   id: uuid('id').primaryKey().defaultRandom(),
   weekStartDate: date('week_start_date').notNull().unique(), // Monday of the week
-  enabledDays: jsonb('enabled_days').notNull().default('{"sunday":true,"monday":true,"tuesday":true,"wednesday":true,"thursday":true,"friday":true,"saturday":true}'),
+  enabledCategories: jsonb('enabled_categories').notNull().default('{"sunday":{"breakfast":true,"lunch":true,"dinner":true,"snack":true},"monday":{"breakfast":true,"lunch":true,"dinner":true,"snack":true},"tuesday":{"breakfast":true,"lunch":true,"dinner":true,"snack":true},"wednesday":{"breakfast":true,"lunch":true,"dinner":true,"snack":true},"thursday":{"breakfast":true,"lunch":true,"dinner":true,"snack":true},"friday":{"breakfast":true,"lunch":true,"dinner":true,"snack":true},"saturday":{"breakfast":true,"lunch":true,"dinner":true,"snack":true}}'),
   lastUpdatedBy: uuid('last_updated_by').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

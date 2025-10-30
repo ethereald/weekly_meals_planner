@@ -5,7 +5,7 @@ const { drizzle } = require('drizzle-orm/postgres-js');
 const postgres = require('postgres');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const { promisify } = require('util');
 
 // Load environment variables
@@ -76,26 +76,104 @@ async function backupSchemaAndData(backupDir, timestamp) {
     
     // Full backup with schema and data
     const fullBackupFile = path.join(backupDir, 'full_backup.sql');
-    const pgDumpCommand = `pg_dump -h ${connectionInfo.host} -p ${connectionInfo.port} -U ${connectionInfo.username} -d ${connectionInfo.database} --no-password --verbose --clean --create --if-exists > "${fullBackupFile}"`;
+    const dbName = connectionInfo.database.split('?')[0]; // Remove query parameters
+    const pgDumpCommand = `pg_dump -h ${connectionInfo.host} -p ${connectionInfo.port} -U ${connectionInfo.username} -d ${dbName} --no-password --verbose --clean --create --if-exists`;
     
     console.log('🔄 Running pg_dump for full backup...');
     console.log('Command:', pgDumpCommand.replace(connectionInfo.password, '***'));
     
-    await execAsync(pgDumpCommand, { env });
+    // Use spawn instead of exec to properly handle output redirection on Windows
+    const { spawn } = require('child_process');
+    await new Promise((resolve, reject) => {
+      const child = spawn('pg_dump', [
+        '-h', connectionInfo.host,
+        '-p', connectionInfo.port,
+        '-U', connectionInfo.username,
+        '-d', dbName,
+        '--no-password',
+        '--verbose',
+        '--clean',
+        '--create',
+        '--if-exists'
+      ], { 
+        env,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+      
+      const output = fs.createWriteStream(fullBackupFile);
+      child.stdout.pipe(output);
+      
+      child.on('close', (code) => {
+        output.close();
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`pg_dump exited with code ${code}`));
+        }
+      });
+      
+      child.on('error', (error) => {
+        reject(error);
+      });
+    });
     
     // Schema-only backup
     const schemaBackupFile = path.join(backupDir, 'schema_only.sql');
-    const schemaDumpCommand = `pg_dump -h ${connectionInfo.host} -p ${connectionInfo.port} -U ${connectionInfo.username} -d ${connectionInfo.database} --no-password --schema-only --verbose --clean --create --if-exists > "${schemaBackupFile}"`;
-    
     console.log('🔄 Running pg_dump for schema-only backup...');
-    await execAsync(schemaDumpCommand, { env });
+    await new Promise((resolve, reject) => {
+      const child = spawn('pg_dump', [
+        '-h', connectionInfo.host,
+        '-p', connectionInfo.port,
+        '-U', connectionInfo.username,
+        '-d', dbName,
+        '--no-password',
+        '--schema-only',
+        '--verbose',
+        '--clean',
+        '--create',
+        '--if-exists'
+      ], { 
+        env,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+      
+      const output = fs.createWriteStream(schemaBackupFile);
+      child.stdout.pipe(output);
+      
+      child.on('close', (code) => {
+        output.close();
+        if (code === 0) resolve(); else reject(new Error(`pg_dump schema exited with code ${code}`));
+      });
+      child.on('error', reject);
+    });
     
     // Data-only backup
     const dataBackupFile = path.join(backupDir, 'data_only.sql');
-    const dataDumpCommand = `pg_dump -h ${connectionInfo.host} -p ${connectionInfo.port} -U ${connectionInfo.username} -d ${connectionInfo.database} --no-password --data-only --verbose --disable-triggers > "${dataBackupFile}"`;
-    
     console.log('🔄 Running pg_dump for data-only backup...');
-    await execAsync(dataDumpCommand, { env });
+    await new Promise((resolve, reject) => {
+      const child = spawn('pg_dump', [
+        '-h', connectionInfo.host,
+        '-p', connectionInfo.port,
+        '-U', connectionInfo.username,
+        '-d', dbName,
+        '--no-password',
+        '--data-only',
+        '--verbose',
+        '--disable-triggers'
+      ], { 
+        env,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+      
+      const output = fs.createWriteStream(dataBackupFile);
+      child.stdout.pipe(output);
+      
+      child.on('close', (code) => {
+        output.close();
+        if (code === 0) resolve(); else reject(new Error(`pg_dump data exited with code ${code}`));
+      });
+      child.on('error', reject);
+    });
     
     return { backupDir, timestamp, fullBackupFile, schemaBackupFile, dataBackupFile };
     
@@ -246,7 +324,7 @@ async function backupMetadata(backupDir) {
     const tableStats = await client`
       SELECT 
         schemaname,
-        tablename,
+        relname as tablename,
         n_tup_ins as inserts,
         n_tup_upd as updates,
         n_tup_del as deletes,
@@ -257,7 +335,7 @@ async function backupMetadata(backupDir) {
         last_analyze,
         last_autoanalyze
       FROM pg_stat_user_tables
-      ORDER BY tablename
+      ORDER BY relname
     `;
     
     // Get database size

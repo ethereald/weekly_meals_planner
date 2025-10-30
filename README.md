@@ -2,7 +2,7 @@
 
 # Weekly Meals Planner
 
-A comprehensive meal planning application built with Next.js 15, TypeScript, and Tailwind CSS. Features multi-user authentication, dual database support (SQLite for development, PostgreSQL for production), and a complete meal planning system.
+A comprehensive meal planning application built with Next.js 15, TypeScript, and Tailwind CSS. Features multi-user authentication, PostgreSQL database with comprehensive meal planning system.
 
 ## 🚀 Features
 
@@ -27,8 +27,7 @@ A comprehensive meal planning application built with Next.js 15, TypeScript, and
 
 * <strong>Frontend</strong>: Next.js 15 (App Router), TypeScript, Tailwind CSS
 * <strong>Backend</strong>: Next.js API Routes
-* <strong>Database</strong>: SQLite (development) / PostgreSQL (production)
-* <strong>ORM</strong>: Drizzle ORM
+* <strong>Database</strong>: PostgreSQL with Drizzle ORM
 * <strong>Authentication</strong>: bcryptjs, jsonwebtoken
 * <strong>Package Manager</strong>: pnpm
 * <strong>Deployment</strong>: Vercel-ready
@@ -59,15 +58,17 @@ A comprehensive meal planning application built with Next.js 15, TypeScript, and
     NEXTAUTH_SECRET="your-secret-key-here"
     
     # Database configuration
-    NODE_ENV="development"  # Uses SQLite for development
-    
-    # For production (PostgreSQL)
-    # NODE_ENV="production"
-    # DATABASE_URL="postgresql://username:password@host:port/database"
+    NODE_ENV="production"
+    DATABASE_URL="postgresql://username:password@host:port/database"
     ```
 4. **Initialize the database**
 
     ```bash
+    # Option 1: Use generated SQL script (recommended)
+    pnpm db:export-schema
+    psql -d your_database -f database-schema-setup.sql
+    
+    # Option 2: Use Drizzle commands
     pnpm db:push
     ```
 5. **Start the development server**
@@ -80,32 +81,37 @@ A comprehensive meal planning application built with Next.js 15, TypeScript, and
 
 ## 🗄️ Database Setup
 
-This project supports dual database environments:
+This project uses **PostgreSQL** exclusively with a comprehensive schema for meal planning.
 
-### Local Development (SQLite)
+### Quick Setup
 
-* <strong>Automatic</strong>: Works out of the box with `NODE_ENV="development"`
-* <strong>File</strong>: Database stored in `./sqlite.db`
-* <strong>No setup required</strong>: Database file is created automatically
+1. **Create a PostgreSQL database** (local, Neon, Supabase, Railway, etc.)
+2. **Generate the complete setup script**:
+   ```bash
+   pnpm db:export-schema
+   ```
+3. **Initialize your database**:
+   ```bash
+   psql -d your_database -f database-schema-setup.sql
+   ```
+4. **Login with admin credentials**:
+   - Username: `admin`
+   - Password: `admin` (change after first login!)
 
-### Production (PostgreSQL)
+### Database Features
 
-1. **Set up PostgreSQL** (e.g., on Vercel, Railway, or Supabase)
-2. <strong>Update environment variables</strong>:
-
-    ```bash
-    NODE_ENV="production"
-    DATABASE_URL="postgresql://username:password@host:port/database"
-    ```
-3. <strong>Push schema to production</strong>:
-
-    ```bash
-    pnpm db:push
-    ```
+* **17 Tables**: Complete meal planning schema
+* **2 Custom Enums**: Dietary restrictions and difficulty levels  
+* **12 Indexes**: Performance optimized
+* **Admin User**: Pre-configured admin account
+* **Default Data**: Categories, tags, and sample ingredients
 
 ### Database Commands
 
 ```bash
+# Export complete schema with data
+pnpm db:export-schema
+
 # Push schema to current database
 pnpm db:push
 
@@ -114,7 +120,12 @@ pnpm db:generate
 
 # View database in Drizzle Studio
 pnpm db:studio
+
+# Create database backup
+pnpm db:backup
 ```
+
+For detailed database documentation, see [DATABASE.md](./DATABASE.md).
 
 ## 🔐 Authentication
 
@@ -196,7 +207,7 @@ src/
 │   └── ui/                # Reusable UI components
 ├── lib/                   # Utilities and configuration
 │   ├── db/                # Database configuration
-│   │   ├── db.ts          # Database connection
+│   │   ├── index.ts       # Database connection
 │   │   ├── schema.ts      # PostgreSQL schema
 │   │   ├── seed.ts        # Database seeding
 │   │   └── migrations/    # Database migrations
@@ -216,14 +227,19 @@ public/                    # Static assets
 └── offline.html           # Offline page
 ```
 
-### Files Removed During Cleanup
-The following migration and legacy files were removed:
-- All SQLite-related scripts (project now uses PostgreSQL exclusively)
-- One-time migration scripts (backup, verify, migrate scripts)
-- Legacy admin promotion scripts
-- Static schema exports (now handled by Drizzle)
-- Icon generation utilities (completed)
-- Migration backup directories
+### Database Files
+```
+src/lib/db/
+├── index.ts               # Database connection and configuration
+├── schema.ts              # Complete PostgreSQL schema
+├── seed.ts                # Database seeding utilities
+└── migrations/            # Drizzle migration files
+
+scripts/
+├── backup-database.js     # Comprehensive backup utility
+├── export-database-schema.ts  # Schema export with admin setup
+└── seed-admin.ts          # Admin user creation
+```
 
 ## 🚀 Deployment
 
@@ -284,8 +300,8 @@ The project includes a comprehensive database schema for:
 | Variable | Description | Required | Default |
 | -------- | ----------- | -------- | ------- |
 | `NEXTAUTH_SECRET` | Secret key for JWT signing | Yes | - |
-| `NODE_ENV` | Environment (development/production) | Yes | development |
-| `DATABASE_URL` | PostgreSQL connection string | Production only | - |
+| `NODE_ENV` | Environment (should be "production") | Yes | production |
+| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
 
 ## 🤝 Contributing
 

@@ -390,12 +390,79 @@ The backup script (`scripts/backup-database.js`) provides:
 - **Timestamped Storage**: Creates unique backup directories with timestamps
 - **Progress Reporting**: Shows detailed progress during backup process
 
+### Windows PostgreSQL Client Setup
+
+**If you're on Windows and getting empty `full_backup.sql` files**, you need to install PostgreSQL client tools:
+
+#### Current Status ✅
+- **Manual backup works perfectly**: `manual_backup.sql` contains all your data
+- **Database connection working**: Successfully connected to PostgreSQL
+- **Backup script functional**: All data is being preserved
+
+#### Issue ⚠️
+- `pg_dump` is not installed, so `full_backup.sql` appears empty
+- This is just a missing tool, not a data issue
+
+#### Solutions
+
+**Option 1: Install PostgreSQL Client Tools (Recommended)**
+
+1. **Download PostgreSQL for Windows**: https://www.postgresql.org/download/windows/
+2. **Choose installer**: Download the full PostgreSQL installer
+3. **During installation**: Make sure to include "Command Line Tools"
+4. **Add to PATH**: The installer usually adds PostgreSQL bin directory to PATH automatically
+5. **Verify installation**: Open new PowerShell and run:
+   ```powershell
+   pg_dump --version
+   ```
+
+**Option 2: Use Chocolatey (Quick Method)**
+
+If you have Chocolatey installed:
+```powershell
+choco install postgresql
+```
+
+**Option 3: Use Scoop (Alternative)**
+
+If you have Scoop installed:
+```powershell
+scoop install postgresql
+```
+
+**Option 4: Portable Installation**
+
+1. Download PostgreSQL portable binaries
+2. Extract to a folder (e.g., `C:\PostgreSQL\bin`)
+3. Add the bin folder to your PATH environment variable
+
+**Verify Installation**
+
+After installing, restart PowerShell and test:
+```powershell
+pg_dump --version
+where pg_dump
+```
+
+**Re-run Backup**
+
+Once `pg_dump` is available:
+```powershell
+pnpm db:backup
+```
+
+This will generate all backup files:
+- `full_backup.sql` (complete database dump)
+- `schema_only.sql` (structure only)
+- `data_only.sql` (data only)
+- `manual_backup.sql` (JavaScript-generated backup - already working)
+
 ### Backup Contents
 
 Each backup includes:
 - **Schema**: Complete table structures, indexes, and constraints
-- **Data**: All rows from all tables (363+ rows in current database)
-- **Metadata**: Database statistics and version information
+- **Data**: All rows from all tables (364+ rows in current database)
+- **Metadata**: Database statistics and version information (33 KB)
 - **Instructions**: Detailed restore procedures
 
 ### Backup Location
@@ -403,9 +470,15 @@ Each backup includes:
 Backups are stored in:
 ```
 backups/backup-YYYY-MM-DDTHH-MM-SS-SSSZ/
-├── manual_backup.sql      # Complete database backup (130+ KB)
-└── RESTORE_INSTRUCTIONS.md # Restoration guide
+├── full_backup.sql        # pg_dump backup (requires PostgreSQL client)
+├── schema_only.sql        # Schema-only pg_dump backup
+├── data_only.sql         # Data-only pg_dump backup
+├── manual_backup.sql      # Complete JavaScript-generated backup (130+ KB)
+├── backup_metadata.json   # Database statistics and metadata (33 KB)
+└── RESTORE_INSTRUCTIONS.md # Detailed restoration guide
 ```
+
+**Note**: On Windows without PostgreSQL client tools installed, only `manual_backup.sql`, `backup_metadata.json`, and `RESTORE_INSTRUCTIONS.md` will contain data. The `pg_dump` files will be empty until you install PostgreSQL client tools.
 
 ### Restoring from Backup
 

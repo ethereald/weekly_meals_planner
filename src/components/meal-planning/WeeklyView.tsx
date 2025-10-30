@@ -417,8 +417,8 @@ export default function WeeklyView({
         </div>
       )}
       
-      {/* Sticky Weekly Summary */}
-      <div className="sticky top-24 z-10 bg-gray-50 pb-6">
+      {/* Weekly Summary */}
+      <div className="bg-gray-50 pb-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
             <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 truncate min-w-0 flex-1">
@@ -501,7 +501,7 @@ export default function WeeklyView({
             // Single category: Show as one group with overlapping label
             <div className="relative">
               {/* Overlapping Category Label */}
-              <div className="absolute -top-3 left-4 z-10">
+              <div className="absolute -top-3 left-4 z-0">
                 <span className="bg-white px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-full shadow-sm">
                   {mealCategories[0].label}
                 </span>
@@ -586,7 +586,7 @@ export default function WeeklyView({
             mealCategories.map((category) => (
               <div key={category.key} className="relative">
                 {/* Overlapping Category Label */}
-                <div className="absolute -top-3 left-4 z-10">
+                <div className="absolute -top-3 left-4 z-0">
                   <span className="bg-white px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-full shadow-sm">
                     {category.label}
                   </span>
@@ -669,7 +669,7 @@ export default function WeeklyView({
           {/* Dedicated Remarks Group with Overlapping Label */}
           <div className="relative">
             {/* Overlapping Remarks Label */}
-            <div className="absolute -top-3 left-4 z-10">
+            <div className="absolute -top-3 left-4 z-0">
               <span className="bg-white px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-full shadow-sm">
                 Remarks
               </span>

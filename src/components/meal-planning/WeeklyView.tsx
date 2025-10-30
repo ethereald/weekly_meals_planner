@@ -251,6 +251,44 @@ export default function WeeklyView({
     await saveWeeklyCategorySettings(newEnabledCategories);
   };
 
+  // Helper function to toggle all user's categories for a day (for single category users)
+  const toggleDayEnabled = async (date: Date) => {
+    const dayKey = format(date, 'yyyy-MM-dd');
+    const userCategories = userSettings?.enabledMealCategories || ['breakfast', 'lunch', 'dinner', 'snack'];
+    
+    // Check if day is currently enabled (any user category is enabled)
+    const currentlyEnabled = userCategories.some(category => 
+      enabledCategories[dayKey]?.[category] ?? true
+    );
+    
+    // Create new state: toggle all user categories
+    const newDayState: Record<string, boolean> = { ...enabledCategories[dayKey] };
+    userCategories.forEach(category => {
+      newDayState[category] = !currentlyEnabled;
+    });
+    
+    const newEnabledCategories = {
+      ...enabledCategories,
+      [dayKey]: newDayState
+    };
+    
+    setEnabledCategories(newEnabledCategories);
+    
+    // Save to database
+    await saveWeeklyCategorySettings(newEnabledCategories);
+  };
+
+  // Helper function to check if day is enabled for the user's categories
+  const isDayEnabledForUser = (date: Date) => {
+    const dayKey = format(date, 'yyyy-MM-dd');
+    const userCategories = userSettings?.enabledMealCategories || ['breakfast', 'lunch', 'dinner', 'snack'];
+    
+    // Check if any of the user's enabled categories are enabled for this day
+    return userCategories.some(category => 
+      enabledCategories[dayKey]?.[category] ?? true
+    );
+  };
+
   const allMealCategories = [
     { key: 'breakfast', label: 'Breakfast', color: 'border-l-yellow-400' },
     { key: 'lunch', label: 'Lunch', color: 'border-l-green-400' },
@@ -409,131 +447,281 @@ export default function WeeklyView({
           {isEditMode && (
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800 mb-2">
-                <strong>Edit Mode:</strong> Click on meal categories below to enable or disable them for each day. Disabled categories will be greyed out and won't allow new meals to be added.
+                <strong>Edit Mode:</strong> {mealCategories.length === 1 
+                  ? 'Click on day boxes below to enable/disable days for meal planning. Disabled days will be greyed out and won\'t allow new meals to be added.'
+                  : 'Click on category boxes below to enable/disable meal categories for each day. Disabled categories will be greyed out and won\'t allow new meals to be added.'
+                }
               </p>
+              
+              {/* Bulk Action Buttons */}
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={async () => {
+                    const userCategories = userSettings?.enabledMealCategories || ['breakfast', 'lunch', 'dinner', 'snack'];
                     const allEnabled: Record<string, Record<string, boolean>> = {};
                     weekDays.forEach(day => {
-                      allEnabled[format(day, 'yyyy-MM-dd')] = {
-                        breakfast: true,
-                        lunch: true,
-                        dinner: true,
-                        snack: true
-                      };
+                      const dayState = { ...enabledCategories[format(day, 'yyyy-MM-dd')] };
+                      userCategories.forEach(category => {
+                        dayState[category] = true;
+                      });
+                      allEnabled[format(day, 'yyyy-MM-dd')] = dayState;
                     });
                     setEnabledCategories(allEnabled);
                     await saveWeeklyCategorySettings(allEnabled);
                   }}
                   className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
                 >
-                  Enable All Categories
+                  {mealCategories.length === 1 ? 'Enable All Days' : 'Enable All Categories'}
                 </button>
                 <button
                   onClick={async () => {
+                    const userCategories = userSettings?.enabledMealCategories || ['breakfast', 'lunch', 'dinner', 'snack'];
                     const allDisabled: Record<string, Record<string, boolean>> = {};
                     weekDays.forEach(day => {
-                      allDisabled[format(day, 'yyyy-MM-dd')] = {
-                        breakfast: false,
-                        lunch: false,
-                        dinner: false,
-                        snack: false
-                      };
+                      const dayState = { ...enabledCategories[format(day, 'yyyy-MM-dd')] };
+                      userCategories.forEach(category => {
+                        dayState[category] = false;
+                      });
+                      allDisabled[format(day, 'yyyy-MM-dd')] = dayState;
                     });
                     setEnabledCategories(allDisabled);
                     await saveWeeklyCategorySettings(allDisabled);
                   }}
                   className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
                 >
-                  Disable All Categories
+                  {mealCategories.length === 1 ? 'Disable All Days' : 'Disable All Categories'}
                 </button>
               </div>
             </div>
           )}
         
-        <div className="grid grid-cols-7 gap-1 sm:gap-2">
-          {weekDays.map((day) => {
-            const isToday = isSameDay(day, new Date());
-            const totalCalories = getDayTotalCalories(day);
-            const dayEnabled = isDayEnabled(day);
-            
-            return (
-              <div 
-                key={day.toISOString()} 
-                className={`text-center p-2 sm:p-3 rounded-lg transition-all ${
-                  !dayEnabled 
-                    ? 'bg-red-100 border-2 border-red-200' 
-                    : isToday 
-                      ? 'bg-blue-50 border border-blue-200' 
-                      : 'bg-gray-50'
-                }`}
-              >
-                <div className={`text-xs sm:text-sm font-medium ${
-                  !dayEnabled 
-                    ? 'text-red-700' 
-                    : isToday 
-                      ? 'text-blue-900' 
-                      : 'text-gray-900'
-                }`}>
-                  {format(day, 'EEE')}
-                </div>
-                <div className={`text-base sm:text-lg font-semibold ${
-                  !dayEnabled 
-                    ? 'text-red-700' 
-                    : isToday 
-                      ? 'text-blue-900' 
-                      : 'text-gray-900'
-                }`}>
-                  {format(day, 'd')}
-                </div>
-                <div className={`text-xs whitespace-nowrap ${
-                  !dayEnabled 
-                    ? 'text-red-600' 
-                    : isToday 
-                      ? 'text-blue-700' 
-                      : 'text-gray-600'
-                }`}>
-                  {totalCalories} cal
-                </div>
-                {isEditMode && (
-                  <div className="mt-2 space-y-1">
-                    {mealCategories.map(category => (
-                      <button
-                        key={category.key}
-                        onClick={() => toggleCategoryEnabled(day, category.key)}
-                        className={`w-full px-1 py-0.5 text-xs rounded transition-colors ${
-                          isCategoryEnabled(day, category.key)
-                            ? 'bg-green-200 text-green-800 hover:bg-green-300'
-                            : 'bg-red-200 text-red-800 hover:bg-red-300'
-                        }`}
-                      >
-                        {category.key.charAt(0).toUpperCase()}{category.key.slice(1)} {isCategoryEnabled(day, category.key) ? '✓' : '✗'}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {!isEditMode && (
-                  <div className="w-full flex justify-center items-center mt-1">
-                    <RemarkIcon 
-                      date={day} 
-                      size="small" 
-                      showAddButton={true}
-                      externalRefreshTrigger={remarkRefreshTrigger}
-                      onRemarkChange={handleRemarkChange}
-                    />
-                  </div>
-                )}
+        {/* Category Groups */}
+        <div className="space-y-6">
+          {mealCategories.length === 1 ? (
+            // Single category: Show as one group with overlapping label
+            <div className="relative">
+              {/* Overlapping Category Label */}
+              <div className="absolute -top-3 left-4 z-10">
+                <span className="bg-white px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-full shadow-sm">
+                  {mealCategories[0].label}
+                </span>
               </div>
-            );
-          })}
+              
+              {/* Group Box */}
+              <div className="bg-white border border-gray-200 rounded-lg pt-4 pb-3 px-3">
+                <div className="grid grid-cols-7 gap-1">
+                  {weekDays.map((day) => {
+                    const isToday = isSameDay(day, new Date());
+                    const userCategories = userSettings?.enabledMealCategories || [];
+                    const dayEnabled = userCategories.some(category => 
+                      enabledCategories[format(day, 'yyyy-MM-dd')]?.[category] ?? true
+                    );
+                    const dayMeals = getMealsForDateAndCategory(day, mealCategories[0].key);
+                    
+                    if (isEditMode) {
+                      // Edit mode: Show toggle
+                      return (
+                        <button
+                          key={day.toISOString()}
+                          onClick={() => toggleDayEnabled(day)}
+                          className={`min-h-[70px] sm:min-h-[80px] w-full text-center p-2 rounded transition-all border flex flex-col justify-center ${
+                            dayEnabled
+                              ? (isToday 
+                                ? 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100' 
+                                : 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100')
+                              : 'bg-red-100 border-red-200 text-red-700 hover:bg-red-200'
+                          }`}
+                        >
+                          <div className="text-xs sm:text-sm font-medium">{format(day, 'EEE')}</div>
+                          <div className="text-xs sm:text-sm font-semibold">{format(day, 'd')}</div>
+                          <div className="text-sm font-bold">{dayEnabled ? '✓' : '✗'}</div>
+                        </button>
+                      );
+                    } else {
+                      // Display mode: Show meal counts
+                      return (
+                        <div
+                          key={day.toISOString()}
+                          className={`aspect-square text-center p-2 rounded transition-all flex flex-col justify-center ${
+                            !dayEnabled 
+                              ? 'bg-red-100 border border-red-200' 
+                              : isToday 
+                                ? 'bg-blue-50 border border-blue-200' 
+                                : 'bg-gray-50 border border-gray-200'
+                          }`}
+                        >
+                          <div className={`text-sm font-medium ${
+                            !dayEnabled 
+                              ? 'text-red-700' 
+                              : isToday 
+                                ? 'text-blue-800' 
+                                : 'text-gray-700'
+                          }`}>{format(day, 'EEE')}</div>
+                          <div className={`text-sm font-semibold ${
+                            !dayEnabled 
+                              ? 'text-red-700' 
+                              : isToday 
+                                ? 'text-blue-800' 
+                                : 'text-gray-700'
+                          }`}>{format(day, 'd')}</div>
+                          <div className={`text-sm ${
+                            !dayEnabled 
+                              ? 'text-red-700' 
+                              : isToday 
+                                ? 'text-blue-800' 
+                                : 'text-gray-700'
+                          }`}>
+                            <span className="sm:hidden">{dayMeals.length}</span>
+                            <span className="hidden sm:inline">{dayMeals.length} meal{dayMeals.length !== 1 ? 's' : ''}</span>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Multiple categories: Show separate groups for each category with overlapping labels
+            mealCategories.map((category) => (
+              <div key={category.key} className="relative">
+                {/* Overlapping Category Label */}
+                <div className="absolute -top-3 left-4 z-10">
+                  <span className="bg-white px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-full shadow-sm">
+                    {category.label}
+                  </span>
+                </div>
+                
+                {/* Group Box */}
+                <div className="bg-white border border-gray-200 rounded-lg pt-4 pb-3 px-3">
+                  <div className="grid grid-cols-7 gap-1">
+                    {weekDays.map((day) => {
+                      const isToday = isSameDay(day, new Date());
+                      const isEnabled = isCategoryEnabled(day, category.key);
+                      const dayMeals = getMealsForDateAndCategory(day, category.key);
+                      
+                      if (isEditMode) {
+                        // Edit mode: Show toggles
+                        return (
+                          <button
+                            key={day.toISOString()}
+                            onClick={() => toggleCategoryEnabled(day, category.key)}
+                            className={`min-h-[70px] sm:min-h-[80px] w-full text-center p-2 rounded transition-all border flex flex-col justify-center ${
+                              isEnabled
+                                ? (isToday 
+                                  ? 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100' 
+                                  : 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100')
+                                : 'bg-red-100 border-red-200 text-red-700 hover:bg-red-200'
+                            }`}
+                          >
+                            <div className="text-xs sm:text-sm font-medium">{format(day, 'EEE')}</div>
+                            <div className="text-xs sm:text-sm font-semibold">{format(day, 'd')}</div>
+                            <div className="text-sm font-bold">{isEnabled ? '✓' : '✗'}</div>
+                          </button>
+                        );
+                      } else {
+                        // Display mode: Show meal counts
+                        return (
+                          <div
+                            key={day.toISOString()}
+                            className={`aspect-square text-center p-2 rounded transition-all flex flex-col justify-center ${
+                              !isEnabled 
+                                ? 'bg-red-100 border border-red-200' 
+                                : isToday 
+                                  ? 'bg-blue-50 border border-blue-200' 
+                                  : 'bg-gray-50 border border-gray-200'
+                            }`}
+                          >
+                            <div className={`text-sm font-medium ${
+                              !isEnabled 
+                                ? 'text-red-700' 
+                                : isToday 
+                                  ? 'text-blue-800' 
+                                  : 'text-gray-700'
+                            }`}>{format(day, 'EEE')}</div>
+                            <div className={`text-sm font-semibold ${
+                              !isEnabled 
+                                ? 'text-red-700' 
+                                : isToday 
+                                  ? 'text-blue-800' 
+                                  : 'text-gray-700'
+                            }`}>{format(day, 'd')}</div>
+                            <div className={`text-sm ${
+                              !isEnabled 
+                                ? 'text-red-700' 
+                                : isToday 
+                                  ? 'text-blue-800' 
+                                  : 'text-gray-700'
+                            }`}>
+                              <span className="sm:hidden">{dayMeals.length}</span>
+                              <span className="hidden sm:inline">{dayMeals.length} meal{dayMeals.length !== 1 ? 's' : ''}</span>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Dedicated Remarks Group with Overlapping Label */}
+          <div className="relative">
+            {/* Overlapping Remarks Label */}
+            <div className="absolute -top-3 left-4 z-10">
+              <span className="bg-white px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-full shadow-sm">
+                Remarks
+              </span>
+            </div>
+            
+            {/* Group Box */}
+            <div className="bg-white border border-gray-200 rounded-lg pt-4 pb-3 px-3">
+              <div className="grid grid-cols-7 gap-1">
+                {weekDays.map((day) => {
+                  const isToday = isSameDay(day, new Date());
+                  
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={`aspect-square text-center p-2 rounded transition-all flex flex-col justify-center ${
+                        isToday 
+                          ? 'bg-blue-50 border border-blue-200' 
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      <div className={`text-sm font-medium ${
+                        isToday 
+                          ? 'text-blue-800' 
+                          : 'text-gray-700'
+                      }`}>{format(day, 'EEE')}</div>
+                      <div className={`text-sm font-semibold ${
+                        isToday 
+                          ? 'text-blue-800' 
+                          : 'text-gray-700'
+                      }`}>{format(day, 'd')}</div>
+                      <div className="flex justify-center mt-1">
+                        <RemarkIcon 
+                          date={day} 
+                          size="small" 
+                          showAddButton={true}
+                          externalRefreshTrigger={remarkRefreshTrigger}
+                          onRemarkChange={handleRemarkChange}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
         </div>
       </div>
 
       {/* Horizontal Days Layout */}
       <div className="space-y-4">
-        {weekDays.filter((day) => isDayEnabled(day)).length === 0 ? (
+        {weekDays.filter((day) => isDayEnabledForUser(day)).length === 0 ? (
           /* Show message when all categories for all days are disabled */
           <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
             <div className="text-gray-400 mb-4">
@@ -557,7 +745,7 @@ export default function WeeklyView({
           </div>
         ) : (
           weekDays
-            .filter((day) => isDayEnabled(day)) // Only show enabled days
+            .filter((day) => isDayEnabledForUser(day)) // Only show days enabled for user's categories
             .map((day) => {
           const isToday = isSameDay(day, new Date());
           const totalCalories = getDayTotalCalories(day);

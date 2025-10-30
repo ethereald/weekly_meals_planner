@@ -527,8 +527,8 @@ export default function WeeklyView({
                           className={`min-h-[70px] sm:min-h-[80px] w-full text-center p-2 rounded transition-all border flex flex-col justify-center ${
                             dayEnabled
                               ? (isToday 
-                                ? 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100' 
-                                : 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100')
+                                ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100' 
+                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100')
                               : 'bg-red-100 border-red-200 text-red-700 hover:bg-red-200'
                           }`}
                         >
@@ -609,8 +609,8 @@ export default function WeeklyView({
                             className={`min-h-[70px] sm:min-h-[80px] w-full text-center p-2 rounded transition-all border flex flex-col justify-center ${
                               isEnabled
                                 ? (isToday 
-                                  ? 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100' 
-                                  : 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100')
+                                  ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100' 
+                                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100')
                                 : 'bg-red-100 border-red-200 text-red-700 hover:bg-red-200'
                             }`}
                           >

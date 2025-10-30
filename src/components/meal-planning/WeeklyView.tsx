@@ -532,9 +532,9 @@ export default function WeeklyView({
                               : 'bg-red-100 border-red-200 text-red-700 hover:bg-red-200'
                           }`}
                         >
-                          <div className="text-xs sm:text-sm font-medium">{format(day, 'EEE')}</div>
-                          <div className="text-xs sm:text-sm font-semibold">{format(day, 'd')}</div>
-                          <div className="text-sm font-bold">{dayEnabled ? '✓' : '✗'}</div>
+                          <div className="text-xs sm:text-sm lg:text-lg xl:text-xl font-medium">{format(day, 'EEE')}</div>
+                          <div className="text-xs sm:text-sm lg:text-lg xl:text-2xl font-semibold">{format(day, 'd')}</div>
+                          <div className="text-sm lg:text-base xl:text-lg font-bold">{dayEnabled ? '✓' : '✗'}</div>
                         </button>
                       );
                     } else {
@@ -550,21 +550,21 @@ export default function WeeklyView({
                                 : 'bg-gray-50 border border-gray-200'
                           }`}
                         >
-                          <div className={`text-sm font-medium ${
+                          <div className={`text-sm lg:text-lg xl:text-xl font-medium ${
                             !dayEnabled 
                               ? 'text-red-700' 
                               : isToday 
                                 ? 'text-blue-800' 
                                 : 'text-gray-700'
                           }`}>{format(day, 'EEE')}</div>
-                          <div className={`text-sm font-semibold ${
+                          <div className={`text-sm lg:text-lg xl:text-2xl font-semibold ${
                             !dayEnabled 
                               ? 'text-red-700' 
                               : isToday 
                                 ? 'text-blue-800' 
                                 : 'text-gray-700'
                           }`}>{format(day, 'd')}</div>
-                          <div className={`text-sm ${
+                          <div className={`text-sm lg:text-base xl:text-lg ${
                             !dayEnabled 
                               ? 'text-red-700' 
                               : isToday 
@@ -614,9 +614,9 @@ export default function WeeklyView({
                                 : 'bg-red-100 border-red-200 text-red-700 hover:bg-red-200'
                             }`}
                           >
-                            <div className="text-xs sm:text-sm font-medium">{format(day, 'EEE')}</div>
-                            <div className="text-xs sm:text-sm font-semibold">{format(day, 'd')}</div>
-                            <div className="text-sm font-bold">{isEnabled ? '✓' : '✗'}</div>
+                            <div className="text-xs sm:text-sm lg:text-lg xl:text-xl font-medium">{format(day, 'EEE')}</div>
+                            <div className="text-xs sm:text-sm lg:text-lg xl:text-2xl font-semibold">{format(day, 'd')}</div>
+                            <div className="text-sm lg:text-base xl:text-lg font-bold">{isEnabled ? '✓' : '✗'}</div>
                           </button>
                         );
                       } else {
@@ -632,21 +632,21 @@ export default function WeeklyView({
                                   : 'bg-gray-50 border border-gray-200'
                             }`}
                           >
-                            <div className={`text-sm font-medium ${
+                            <div className={`text-sm lg:text-lg xl:text-xl font-medium ${
                               !isEnabled 
                                 ? 'text-red-700' 
                                 : isToday 
                                   ? 'text-blue-800' 
                                   : 'text-gray-700'
                             }`}>{format(day, 'EEE')}</div>
-                            <div className={`text-sm font-semibold ${
+                            <div className={`text-sm lg:text-lg xl:text-2xl font-semibold ${
                               !isEnabled 
                                 ? 'text-red-700' 
                                 : isToday 
                                   ? 'text-blue-800' 
                                   : 'text-gray-700'
                             }`}>{format(day, 'd')}</div>
-                            <div className={`text-sm ${
+                            <div className={`text-sm lg:text-base xl:text-lg ${
                               !isEnabled 
                                 ? 'text-red-700' 
                                 : isToday 
@@ -690,12 +690,12 @@ export default function WeeklyView({
                           : 'bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      <div className={`text-sm font-medium ${
+                      <div className={`text-sm lg:text-lg xl:text-xl font-medium ${
                         isToday 
                           ? 'text-blue-800' 
                           : 'text-gray-700'
                       }`}>{format(day, 'EEE')}</div>
-                      <div className={`text-sm font-semibold ${
+                      <div className={`text-sm lg:text-lg xl:text-2xl font-semibold ${
                         isToday 
                           ? 'text-blue-800' 
                           : 'text-gray-700'

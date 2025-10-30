@@ -146,26 +146,84 @@ For detailed authentication documentation, see [AUTHENTICATION.md](./AUTHENTICAT
 
 ## 📁 Project Structure
 
+### Root Directory Files (Preserved)
+```
+# Configuration Files
+package.json              # Project dependencies and scripts
+drizzle.config.ts         # Database ORM configuration
+next.config.ts            # Next.js configuration
+tsconfig.json             # TypeScript configuration
+eslint.config.mjs         # ESLint configuration
+postcss.config.mjs        # PostCSS configuration
+vercel.json               # Vercel deployment configuration
+middleware.ts             # Next.js middleware for auth
+
+# Environment & Setup
+.env.example              # Environment template
+.env.local                # Local environment variables (git-ignored)
+.gitignore                # Git ignore rules
+
+# Documentation
+README.md                 # This file - project overview
+DATABASE.md               # Database setup and schema documentation
+AUTHENTICATION.md         # Authentication system documentation
+
+# Build & Dependencies
+pnpm-lock.yaml            # Package manager lock file
+next-env.d.ts             # Next.js TypeScript declarations
+tsconfig.tsbuildinfo      # TypeScript build cache
+```
+
+### Directory Structure
 ```
 src/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes
-│   │   └── auth/          # Authentication endpoints
-│   ├── auth/              # Authentication demo page
+│   │   ├── auth/          # Authentication endpoints
+│   │   └── health/        # Database health check
+│   ├── auth/              # Authentication pages
+│   ├── meal-planning/     # Meal planning interface
+│   ├── recipes/           # Recipe management
+│   ├── account/           # User account management
+│   ├── admin/             # Admin interface
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout
 │   └── page.tsx           # Homepage
 ├── components/            # React components
-│   └── auth/              # Authentication components
+│   ├── auth/              # Authentication components
+│   ├── meal-planning/     # Meal planning components
+│   ├── recipes/           # Recipe components
+│   └── ui/                # Reusable UI components
 ├── lib/                   # Utilities and configuration
 │   ├── db/                # Database configuration
-│   │   ├── db.ts          # Database setup
-│   │   └── schema.ts      # Database schema
+│   │   ├── db.ts          # Database connection
+│   │   ├── schema.ts      # PostgreSQL schema
+│   │   ├── seed.ts        # Database seeding
+│   │   └── migrations/    # Database migrations
 │   ├── auth.ts            # Server-side auth utilities
 │   ├── auth-client.ts     # Client-side auth utilities
 │   ├── middleware.ts      # Authentication middleware
-│   └── utils.ts           # General utilities
+│   └── utils/             # General utilities
+├── contexts/              # React contexts
+│   ├── AuthContext.tsx    # Authentication context
+│   └── ThemeContext.tsx   # Theme management
+scripts/                   # Database and maintenance scripts
+├── backup-database.js     # Database backup utility
+public/                    # Static assets
+├── icons/                 # PWA icons and favicons
+├── manifest.json          # PWA manifest
+├── sw.js                  # Service worker
+└── offline.html           # Offline page
 ```
+
+### Files Removed During Cleanup
+The following migration and legacy files were removed:
+- All SQLite-related scripts (project now uses PostgreSQL exclusively)
+- One-time migration scripts (backup, verify, migrate scripts)
+- Legacy admin promotion scripts
+- Static schema exports (now handled by Drizzle)
+- Icon generation utilities (completed)
+- Migration backup directories
 
 ## 🚀 Deployment
 
@@ -206,6 +264,7 @@ pnpm lint         # Run ESLint
 pnpm db:push      # Push schema to database
 pnpm db:generate  # Generate migrations
 pnpm db:studio    # Open Drizzle Studio
+pnpm db:backup    # Create database backup
 ```
 
 ### Database Schema

@@ -60,11 +60,10 @@ async function createBackupDirectory() {
   return { backupDir, timestamp };
 }
 
-async function backupSchemaAndData() {
+async function backupSchemaAndData(backupDir, timestamp) {
   console.log('🗃️ Creating full PostgreSQL backup (schema + data)...');
   
   try {
-    const { backupDir, timestamp } = await createBackupDirectory();
     const connectionInfo = parsePostgreSQLUrl(DATABASE_URL);
     
     console.log(`📁 Backup directory: ${backupDir}`);
@@ -103,14 +102,14 @@ async function backupSchemaAndData() {
   } catch (error) {
     console.error('❌ pg_dump backup failed:', error);
     console.log('💡 Falling back to manual backup method...');
-    return await manualBackup();
+    return await manualBackup({ backupDir, timestamp });
   }
 }
 
-async function manualBackup() {
+async function manualBackup(backupInfo) {
   console.log('🔄 Creating manual backup using SQL queries...');
   
-  const { backupDir, timestamp } = await createBackupDirectory();
+  const { backupDir, timestamp } = backupInfo;
   
   // Get all table names
   const tables = await client`
@@ -229,11 +228,10 @@ SET row_security = off;
   };
 }
 
-async function backupMetadata() {
+async function backupMetadata(backupDir) {
   console.log('📋 Creating metadata backup...');
   
   try {
-    const { backupDir } = await createBackupDirectory();
     
     // Get database metadata
     const metadata = {
@@ -362,9 +360,12 @@ async function runFullBackup() {
   console.log('🎯 Purpose: Pre-migration backup for day-level category control\n');
   
   try {
+    // Step 0: Create backup directory
+    const { backupDir, timestamp } = await createBackupDirectory();
+    
     // Step 1: Create metadata backup
     console.log('Step 1: Creating metadata backup...');
-    const metadataInfo = await backupMetadata();
+    const metadataInfo = await backupMetadata(backupDir);
     
     if (metadataInfo) {
       console.log('✅ Metadata backup created');
@@ -374,7 +375,7 @@ async function runFullBackup() {
     
     // Step 2: Create schema and data backup
     console.log('\nStep 2: Creating schema and data backup...');
-    const backupInfo = await backupSchemaAndData();
+    const backupInfo = await backupSchemaAndData(backupDir, timestamp);
     
     // Step 3: Create restore instructions
     console.log('\nStep 3: Creating restore instructions...');

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { mealsApi, SavedMeal } from '@/lib/api/meals';
+import { resolveTagDisplayColors } from '@/lib/utils/tagColors';
 import RecipeList from '@/components/recipes/RecipeList';
 import RecipeEditModal from '@/components/recipes/RecipeEditModal';
 import AddMealModal from '@/components/recipes/AddMealModal';
@@ -61,28 +62,20 @@ export default function RecipesPage() {
     }
   }, [recipes, selectedTags]);
 
-  // Get tag color with fallback to varied colors for consistency
-  const getTagColor = (tagName: string, storedColor?: string) => {
-    // Use stored color from database
-    return storedColor || '#3B82F6';
-  };
-
   // Get all unique tags from recipes
   const getAllTags = () => {
-    const tagMap = new Map();
+    const tagMap = new Map<string, { id: string; name: string; color: string }>();
     recipes.forEach(recipe => {
-      if (recipe.tags) {
-        recipe.tags.forEach(tag => {
-          tagMap.set(tag.id, {
-            ...tag,
-            // Override color with calculated color for consistency
-            color: getTagColor(tag.name, tag.color)
-          });
-        });
-      }
+      recipe.tags?.forEach(tag => tagMap.set(tag.id, tag));
     });
     return Array.from(tagMap.values());
   };
+
+  // Resolved display colors for the filter bar (aligns with RecipeList card colors)
+  const resolvedFilterColors = useMemo(
+    () => resolveTagDisplayColors(getAllTags()),
+    [recipes] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const handleTagToggle = (tagId: string) => {
     setSelectedTags(prev => 
@@ -220,29 +213,32 @@ export default function RecipesPage() {
               <div className="flex-1 min-w-0">
                 {getAllTags().length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {getAllTags().map(tag => (
-                      <button
-                        key={tag.id}
-                        onClick={() => handleTagToggle(tag.id)}
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                          selectedTags.includes(tag.id)
-                            ? 'border-2 shadow-sm'
-                            : 'border hover:shadow-sm'
-                        }`}
-                        style={{
-                          backgroundColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}20`,
-                          borderColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}60`,
-                          color: selectedTags.includes(tag.id) ? 'white' : tag.color
-                        }}
-                      >
-                        {tag.name}
-                        {selectedTags.includes(tag.id) && (
-                          <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                    ))}
+                    {getAllTags().map(tag => {
+                      const displayColor = resolvedFilterColors.get(tag.id) ?? tag.color;
+                      return (
+                        <button
+                          key={tag.id}
+                          onClick={() => handleTagToggle(tag.id)}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                            selectedTags.includes(tag.id)
+                              ? 'border-2 shadow-sm'
+                              : 'border hover:shadow-sm'
+                          }`}
+                          style={{
+                            backgroundColor: selectedTags.includes(tag.id) ? displayColor : `${displayColor}20`,
+                            borderColor: selectedTags.includes(tag.id) ? displayColor : `${displayColor}60`,
+                            color: selectedTags.includes(tag.id) ? 'white' : displayColor
+                          }}
+                        >
+                          {tag.name}
+                          {selectedTags.includes(tag.id) && (
+                            <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 italic">No tags available</p>

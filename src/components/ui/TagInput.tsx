@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { TAG_COLORS } from '@/lib/utils/tagColors';
 
 interface Tag {
   id: string;
@@ -114,36 +115,53 @@ export default function TagInput({ selectedTags, onTagsChange, placeholder = "Ty
     };
   }, []);
 
-  // Get tag color (existing tags have colors, new ones get calculated colors)
+  // Resolve display colors: redistribute duplicate-colored existing tags
+  const resolvedTagColors = useMemo(() => {
+    const colorMap = new Map<string, string>(); // tag name -> display color
+    const colorUsage = new Map<string, number>();
+    existingTags.forEach(t => colorUsage.set(t.color, (colorUsage.get(t.color) || 0) + 1));
+    const usedColors = new Set<string>();
+
+    // First pass: tags with a unique stored color keep it
+    existingTags.forEach(tag => {
+      if ((colorUsage.get(tag.color) || 0) === 1) {
+        colorMap.set(tag.name, tag.color);
+        usedColors.add(tag.color);
+      }
+    });
+
+    // Second pass: tags with duplicate stored colors get redistributed
+    existingTags.forEach(tag => {
+      if ((colorUsage.get(tag.color) || 0) > 1 && !colorMap.has(tag.name)) {
+        let hash = 0;
+        for (let i = 0; i < tag.name.length; i++) {
+          hash = tag.name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const hashColor = TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+        const assignedColor = usedColors.has(hashColor)
+          ? (TAG_COLORS.find(c => !usedColors.has(c)) ?? hashColor)
+          : hashColor;
+        colorMap.set(tag.name, assignedColor);
+        usedColors.add(assignedColor);
+      }
+    });
+
+    return { colorMap, usedColors };
+  }, [existingTags]);
+
+  // Get tag color: resolved for existing tags, best-effort unique for new tags
   const getTagColor = (tagName: string) => {
-    const existingTag = existingTags.find(tag => tag.name === tagName);
-    if (existingTag?.color) {
-      return existingTag.color;
+    if (resolvedTagColors.colorMap.has(tagName)) {
+      return resolvedTagColors.colorMap.get(tagName)!;
     }
-    
-    // Use the same color calculation logic as the database script
-    const tagColors = [
-      '#DC2626', // red-600 - bright red
-      '#059669', // emerald-600 - green
-      '#D97706', // amber-600 - orange
-      '#7C3AED', // violet-600 - purple
-      '#DB2777', // pink-600 - hot pink
-      '#0891B2', // cyan-600 - cyan
-      '#CA8A04', // yellow-600 - gold
-      '#1D4ED8', // blue-600 - royal blue
-      '#047857', // emerald-700 - dark green
-      '#B91C1C', // red-700 - dark red
-      '#7C2D12', // orange-800 - brown
-      '#6B21A8', // purple-800 - deep purple
-    ];
-    
-    // Simple hash function to consistently assign colors based on tag name
+    // New (unsaved) tag: hash-based but try to avoid colors used by existing tags
     let hash = 0;
     for (let i = 0; i < tagName.length; i++) {
       hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const colorIndex = Math.abs(hash) % tagColors.length;
-    return tagColors[colorIndex];
+    const hashColor = TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+    if (!resolvedTagColors.usedColors.has(hashColor)) return hashColor;
+    return TAG_COLORS.find(c => !resolvedTagColors.usedColors.has(c)) ?? hashColor;
   };
 
   return (
@@ -223,7 +241,10 @@ export default function TagInput({ selectedTags, onTagsChange, placeholder = "Ty
                     onClick={() => addTag(inputValue.trim())}
                     className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none flex items-center gap-2"
                   >
-                    <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                    <span
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: getTagColor(inputValue.trim()) }}
+                    ></span>
                     <span className="text-sm">
                       Create "<span className="font-medium">{inputValue.trim()}</span>"
                     </span>

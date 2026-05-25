@@ -3,6 +3,23 @@ import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { db, meals, tags, mealTags } from '@/lib/db';
 import { eq, inArray, and } from 'drizzle-orm';
 
+const TAG_COLORS = [
+  '#DC2626', '#059669', '#D97706', '#7C3AED', '#DB2777', '#0891B2',
+  '#CA8A04', '#1D4ED8', '#047857', '#B91C1C', '#7C2D12', '#6B21A8',
+];
+
+function pickTagColor(name: string, usedColors: Set<string>): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hashColor = TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+  if (!usedColors.has(hashColor)) return hashColor;
+  // Hash color is already in use — find the first unused color
+  const unused = TAG_COLORS.find(c => !usedColors.has(c));
+  return unused ?? hashColor;
+}
+
 async function postHandler(request: AuthenticatedRequest) {
   try {
     const userId = request.user!.userId;
@@ -77,14 +94,15 @@ async function postHandler(request: AuthenticatedRequest) {
       // Create new tags if needed
       let newTags = [];
       if (newTagNames.length > 0) {
+        const usedColors = new Set(existingTags.map((t: any) => t.color));
         newTags = await db
           .insert(tags)
           .values(
-            newTagNames.map((name: string) => ({
-              name,
-              color: '#3B82F6', // Default blue color
-              userId, // Add userId to new tags
-            }))
+            newTagNames.map((name: string) => {
+              const color = pickTagColor(name, usedColors);
+              usedColors.add(color);
+              return { name, color, userId };
+            })
           )
           .returning();
         console.log('Created new tags:', newTags);

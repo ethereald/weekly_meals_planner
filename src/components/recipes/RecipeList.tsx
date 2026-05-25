@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { SavedMeal, mealsApi } from '@/lib/api/meals';
+import { resolveTagDisplayColors } from '@/lib/utils/tagColors';
 
 interface RecipeListProps {
   recipes: SavedMeal[];
@@ -9,13 +10,15 @@ interface RecipeListProps {
   onDeleteRecipe: (recipeId: string) => void;
 }
 
-// Get tag color with fallback to varied colors for consistency
-const getTagColor = (tagName: string, storedColor?: string) => {
-  // Use stored color from database
-  return storedColor || '#3B82F6';
-};
-
 export default function RecipeList({ recipes, onEditRecipe, onDeleteRecipe }: RecipeListProps) {
+  // Resolve tag colors across ALL recipes to ensure consistent, duplicate-free colors
+  const resolvedTagColors = useMemo(() => {
+    const allTags = new Map<string, { id: string; name: string; color: string }>();
+    recipes.forEach(recipe => {
+      recipe.tags?.forEach(tag => allTags.set(tag.id, tag));
+    });
+    return resolveTagDisplayColors(Array.from(allTags.values()));
+  }, [recipes]);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     recipe: SavedMeal | null;
     plannedInfo: { count: number; dates: string[] } | null;
@@ -114,6 +117,7 @@ export default function RecipeList({ recipes, onEditRecipe, onDeleteRecipe }: Re
           <RecipeCard
             key={recipe.id}
             recipe={recipe}
+            resolvedTagColors={resolvedTagColors}
             plannedCount={recipeCounts[recipe.id] || 0}
             countLoading={countsLoading}
             onEdit={() => onEditRecipe(recipe)}
@@ -138,13 +142,14 @@ export default function RecipeList({ recipes, onEditRecipe, onDeleteRecipe }: Re
 
 interface RecipeCardProps {
   recipe: SavedMeal;
+  resolvedTagColors: Map<string, string>;
   plannedCount: number;
   countLoading: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-function RecipeCard({ recipe, plannedCount, countLoading, onEdit, onDelete }: RecipeCardProps) {
+function RecipeCard({ recipe, resolvedTagColors, plannedCount, countLoading, onEdit, onDelete }: RecipeCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       {/* Header */}
@@ -177,7 +182,7 @@ function RecipeCard({ recipe, plannedCount, countLoading, onEdit, onDelete }: Re
             <div className="flex items-center gap-2">
               {recipe.tags && recipe.tags.length > 0 ? (
                 recipe.tags.slice(0, 2).map((tag) => {
-                  const tagColor = getTagColor(tag.name, tag.color);
+                  const tagColor = resolvedTagColors.get(tag.id) ?? tag.color;
                   return (
                     <span 
                       key={tag.id}

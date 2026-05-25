@@ -6,6 +6,7 @@ import { Meal } from './MealCard';
 import { SavedMeal } from '../../lib/api/meals';
 import { UserSettings } from '../../lib/auth-client';
 import DatePicker from '../ui/DatePicker';
+import { TAG_COLORS } from '@/lib/utils/tagColors';
 
 interface MealFormModalProps {
   isOpen: boolean;
@@ -40,6 +41,39 @@ export default function MealFormModal({
   const [isLoadingMeals, setIsLoadingMeals] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [showAllFilterTags, setShowAllFilterTags] = useState(false);
+
+  // Resolve display colors so that tags with duplicate stored colors get different colors
+  const resolveTagDisplayColors = (tagList: Array<{ id: string; name: string; color: string }>) => {
+    const colorMap = new Map<string, string>();
+    const colorUsage = new Map<string, number>();
+    tagList.forEach(t => colorUsage.set(t.color, (colorUsage.get(t.color) || 0) + 1));
+    const usedColors = new Set<string>();
+
+    tagList.forEach(tag => {
+      if ((colorUsage.get(tag.color) || 0) === 1) {
+        colorMap.set(tag.id, tag.color);
+        usedColors.add(tag.color);
+      }
+    });
+
+    tagList.forEach(tag => {
+      if ((colorUsage.get(tag.color) || 0) > 1 && !colorMap.has(tag.id)) {
+        let hash = 0;
+        for (let i = 0; i < tag.name.length; i++) {
+          hash = tag.name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const hashColor = TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+        const assignedColor = usedColors.has(hashColor)
+          ? (TAG_COLORS.find(c => !usedColors.has(c)) ?? hashColor)
+          : hashColor;
+        colorMap.set(tag.id, assignedColor);
+        usedColors.add(assignedColor);
+      }
+    });
+
+    return colorMap;
+  };
 
   // Get enabled categories from user settings
   const enabledCategories = userSettings?.enabledMealCategories || ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -274,35 +308,60 @@ export default function MealFormModal({
                 {showTagFilter && (
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-1">
-                      {getAllTags().slice(0, 6).map(tag => (
-                        <button
-                          key={tag.id}
-                          type="button"
-                          onClick={() => handleTagToggle(tag.id)}
-                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border transition-colors ${
-                            selectedTags.includes(tag.id)
-                              ? 'border-2 shadow-sm'
-                              : 'border hover:shadow-sm'
-                          }`}
-                          style={{
-                            backgroundColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}20`,
-                            borderColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}60`,
-                            color: selectedTags.includes(tag.id) ? 'white' : tag.color
-                          }}
-                        >
-                          {tag.name}
-                          {selectedTags.includes(tag.id) && (
-                            <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                      {getAllTags().length > 6 && (
-                        <span className="text-xs text-gray-500 px-2 py-1">
-                          +{getAllTags().length - 6} more
-                        </span>
-                      )}
+                      {(() => {
+                        const allTags = getAllTags();
+                        const resolvedColors = resolveTagDisplayColors(allTags);
+                        const visibleTags = showAllFilterTags ? allTags : allTags.slice(0, 6);
+                        return (
+                          <>
+                            {visibleTags.map(tag => {
+                              const color = resolvedColors.get(tag.id) || tag.color;
+                              return (
+                                <button
+                                  key={tag.id}
+                                  type="button"
+                                  onClick={() => handleTagToggle(tag.id)}
+                                  className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border transition-colors ${
+                                    selectedTags.includes(tag.id)
+                                      ? 'border-2 shadow-sm'
+                                      : 'border hover:shadow-sm'
+                                  }`}
+                                  style={{
+                                    backgroundColor: selectedTags.includes(tag.id) ? color : `${color}20`,
+                                    borderColor: selectedTags.includes(tag.id) ? color : `${color}60`,
+                                    color: selectedTags.includes(tag.id) ? 'white' : color
+                                  }}
+                                >
+                                  {tag.name}
+                                  {selectedTags.includes(tag.id) && (
+                                    <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </button>
+                              );
+                            })}
+                            {!showAllFilterTags && allTags.length > 6 && (
+                              <button
+                                type="button"
+                                onClick={() => setShowAllFilterTags(true)}
+                                className="inline-flex items-center px-2 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded border border-blue-200 transition-colors"
+                              >
+                                +{allTags.length - 6} more
+                              </button>
+                            )}
+                            {showAllFilterTags && allTags.length > 6 && (
+                              <button
+                                type="button"
+                                onClick={() => setShowAllFilterTags(false)}
+                                className="inline-flex items-center px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded border border-gray-200 transition-colors"
+                              >
+                                Show less
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     
                     {selectedTags.length > 0 && (

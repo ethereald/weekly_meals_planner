@@ -33,7 +33,7 @@
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
     "jsonwebtoken": "^9.0.2",
-    "next": "15.5.2",
+    "next": "15.5.9",
     "next-auth": "^4.24.11",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",

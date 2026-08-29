@@ -1,7 +1,24 @@
 import { NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { db, meals, dailyPlannedMeals, users, tags, mealTags } from '@/lib/db';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { eq, and, gte, lte, inArray } from 'drizzle-orm';
+
+const TAG_COLORS = [
+  '#DC2626', '#059669', '#D97706', '#7C3AED', '#DB2777', '#0891B2',
+  '#CA8A04', '#1D4ED8', '#047857', '#B91C1C', '#7C2D12', '#6B21A8',
+];
+
+function pickTagColor(name: string, usedColors: Set<string>): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const preferredColor = TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+  return usedColors.has(preferredColor)
+    ? (TAG_COLORS.find(color => !usedColors.has(color)) ?? preferredColor)
+    : preferredColor;
+}
 
 async function getHandler(request: AuthenticatedRequest) {
   try {
@@ -123,7 +140,7 @@ async function postHandler(request: AuthenticatedRequest) {
     const userId = request.user!.userId;
 
     const body = await request.json();
-    const { name, category, time, plannedDate, description, calories, cookTime, notes } = body;
+    const { name, category, time, plannedDate, description, calories, cookTime, notes, tagNames } = body;
 
     if (!name || !plannedDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -172,6 +189,44 @@ async function postHandler(request: AuthenticatedRequest) {
         .returning();
 
       mealId = newMeal[0].id;
+    }
+
+    if (Array.isArray(tagNames)) {
+      const normalizedTagNames = Array.from(new Set(
+        tagNames
+          .filter((tagName): tagName is string => typeof tagName === 'string')
+          .map(tagName => tagName.trim())
+          .filter(Boolean)
+      ));
+
+      await db.delete(mealTags).where(eq(mealTags.mealId, mealId));
+
+      if (normalizedTagNames.length > 0) {
+        const existingTags = await db
+          .select()
+          .from(tags)
+          .where(inArray(tags.name, normalizedTagNames));
+        const existingTagNames = new Set(existingTags.map(tag => tag.name));
+        const newTagNames = normalizedTagNames.filter(tagName => !existingTagNames.has(tagName));
+
+        let newTags: typeof existingTags = [];
+        if (newTagNames.length > 0) {
+          const usedColors = new Set(existingTags.map(tag => tag.color));
+          newTags = await db
+            .insert(tags)
+            .values(newTagNames.map(tagName => {
+              const color = pickTagColor(tagName, usedColors);
+              usedColors.add(color);
+              return { name: tagName, color, userId };
+            }))
+            .returning();
+        }
+
+        const tagsToAssociate = [...existingTags, ...newTags];
+        await db.insert(mealTags).values(
+          tagsToAssociate.map(tag => ({ mealId, tagId: tag.id }))
+        );
+      }
     }
 
     // Add to daily planned meals for the specific date

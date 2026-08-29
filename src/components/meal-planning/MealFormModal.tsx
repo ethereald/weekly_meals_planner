@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { Meal } from './MealCard';
 import { SavedMeal } from '../../lib/api/meals';
 import { UserSettings } from '../../lib/auth-client';
 import DatePicker from '../ui/DatePicker';
+import TagInput from '../ui/TagInput';
 import { TAG_COLORS } from '@/lib/utils/tagColors';
 
 interface MealFormModalProps {
@@ -108,6 +109,7 @@ export default function MealFormModal({
         notes: editingMeal.notes || '',
         plannedDate: editingDate
       });
+      setSelectedTags(editingMeal.meal?.tags?.map(tag => tag.name) || []);
     } else {
       // Auto-select single category if only one is enabled
       const defaultCategory = singleCategory || selectedCategory || categoryOptions[0]?.value || 'breakfast';
@@ -119,6 +121,7 @@ export default function MealFormModal({
         notes: '',
         plannedDate: defaultDate
       });
+      setSelectedTags([]);
     }
   }, [editingMeal, selectedCategory, singleCategory, categoryOptions, selectedDate]);
 
@@ -134,6 +137,7 @@ export default function MealFormModal({
         notes: '',
         plannedDate: defaultDate
       });
+      setSelectedTags([]);
     }
   }, [isOpen, singleCategory, selectedCategory, categoryOptions, selectedDate, editingMeal]);
 
@@ -170,6 +174,7 @@ export default function MealFormModal({
         name: selectedMeal.name,
         selectedMealId: mealId
       });
+      setSelectedTags(selectedMeal.tags?.map(tag => tag.name) || []);
     }
   };
 
@@ -181,7 +186,8 @@ export default function MealFormModal({
       name: formData.name,
       category: formData.category,
       time: formData.category, // Use category as the meal slot/time
-      notes: formData.notes || undefined
+      notes: formData.notes || undefined,
+      tagNames: selectedTags
     };
 
     // Parse the selected date from form
@@ -320,17 +326,19 @@ export default function MealFormModal({
                                 <button
                                   key={tag.id}
                                   type="button"
+                                  data-selected={selectedTags.includes(tag.id)}
                                   onClick={() => handleTagToggle(tag.id)}
-                                  className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border transition-colors ${
+                                  className={`meal-tag-filter inline-flex items-center px-2 py-1 rounded text-xs font-medium border transition-colors ${
                                     selectedTags.includes(tag.id)
                                       ? 'border-2 shadow-sm'
                                       : 'border hover:shadow-sm'
                                   }`}
                                   style={{
+                                    '--tag-color': color,
                                     backgroundColor: selectedTags.includes(tag.id) ? color : `${color}20`,
                                     borderColor: selectedTags.includes(tag.id) ? color : `${color}60`,
                                     color: selectedTags.includes(tag.id) ? 'white' : color
-                                  }}
+                                  } as CSSProperties}
                                 >
                                   {tag.name}
                                   {selectedTags.includes(tag.id) && (
@@ -455,6 +463,19 @@ export default function MealFormModal({
                 placeholder="Enter meal name"
               />
             </div>
+
+            {!editingMeal && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tags
+                </label>
+                <TagInput
+                  selectedTags={selectedTags}
+                  onTagsChange={setSelectedTags}
+                  placeholder="Type to add or select tags..."
+                />
+              </div>
+            )}
 
             <div>
               <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import { SavedMeal, mealsApi } from '@/lib/api/meals';
 import { resolveTagDisplayColors } from '@/lib/utils/tagColors';
 
@@ -186,12 +186,13 @@ function RecipeCard({ recipe, resolvedTagColors, plannedCount, countLoading, onE
                   return (
                     <span 
                       key={tag.id}
-                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
+                      className="recipe-tag inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
                       style={{ 
+                        '--tag-color': tagColor,
                         backgroundColor: `${tagColor}20`,
                         color: tagColor,
                         borderColor: `${tagColor}60`
-                      }}
+                      } as CSSProperties}
                     >
                       {tag.name}
                     </span>

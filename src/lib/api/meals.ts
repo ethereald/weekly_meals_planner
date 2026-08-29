@@ -165,6 +165,7 @@ export const mealsApi = {
     calories?: number;
     cookTime?: number;
     notes?: string;
+    tagNames?: string[];
   }): Promise<PlannedMeal | null> {
     try {
       const response = await fetch('/api/meals', {

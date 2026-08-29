@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { mealsApi, SavedMeal } from '@/lib/api/meals';
@@ -218,17 +218,19 @@ export default function RecipesPage() {
                       return (
                         <button
                           key={tag.id}
+                          data-selected={selectedTags.includes(tag.id)}
                           onClick={() => handleTagToggle(tag.id)}
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                          className={`recipe-tag inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                             selectedTags.includes(tag.id)
                               ? 'border-2 shadow-sm'
                               : 'border hover:shadow-sm'
                           }`}
                           style={{
+                            '--tag-color': displayColor,
                             backgroundColor: selectedTags.includes(tag.id) ? displayColor : `${displayColor}20`,
                             borderColor: selectedTags.includes(tag.id) ? displayColor : `${displayColor}60`,
                             color: selectedTags.includes(tag.id) ? 'white' : displayColor
-                          }}
+                          } as CSSProperties}
                         >
                           {tag.name}
                           {selectedTags.includes(tag.id) && (

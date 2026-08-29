@@ -13,6 +13,7 @@ export interface Meal {
   notes?: string; // Notes for this specific planned meal instance
   calories?: number;
   cookTime?: number;
+  tagNames?: string[];
   plannedDate?: string;
   meal?: {
     id: string;

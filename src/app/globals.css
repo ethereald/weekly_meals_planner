@@ -339,6 +339,14 @@ input:focus, textarea:focus, select:focus {
   color: #ffffff !important;
 }
 
+/* Keep unselected tag chips readable against dark theme surfaces. */
+.theme-dark .meal-tag-filter:not([data-selected="true"]),
+.theme-dark .recipe-tag:not([data-selected="true"]) {
+  background-color: color-mix(in srgb, var(--tag-color) 22%, var(--background)) !important;
+  border-color: color-mix(in srgb, var(--tag-color) 65%, #ffffff) !important;
+  color: color-mix(in srgb, var(--tag-color) 35%, #ffffff) !important;
+}
+
 .theme-ocean .text-white {
   color: #ffffff !important;
 }

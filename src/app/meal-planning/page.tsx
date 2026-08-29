@@ -219,6 +219,7 @@ function MealPlanningContent() {
         calories: mealData.calories,
         cookTime: mealData.cookTime,
         notes: mealData.notes,
+        tagNames: mealData.tagNames,
       });
 
       if (plannedMeal) {
